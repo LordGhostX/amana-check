@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;--> statement-breakpoint
 CREATE TABLE "answer_versions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"answer_id" integer NOT NULL,
@@ -5,6 +6,7 @@ CREATE TABLE "answer_versions" (
 	"status" text NOT NULL,
 	"payload" jsonb NOT NULL,
 	"change_reason" text,
+	"reviewer" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -17,6 +19,10 @@ CREATE TABLE "answers" (
 	"payload" jsonb NOT NULL,
 	"prompt_version" text NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
+	"review_state" text DEFAULT 'unreviewed' NOT NULL,
+	"review_note" text,
+	"reviewed_at" timestamp with time zone,
+	"reviewer" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -88,9 +94,7 @@ CREATE TABLE "events" (
 CREATE TABLE "feedback" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"answer_id" integer,
-	"claim_hash" text,
 	"rating" text,
-	"comment" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -118,16 +122,6 @@ CREATE TABLE "llm_calls" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "locale_hints" (
-	"ip_hash" text PRIMARY KEY NOT NULL,
-	"locale" text NOT NULL,
-	"confidence" integer DEFAULT 0 NOT NULL,
-	"hits" integer DEFAULT 1 NOT NULL,
-	"first_seen" timestamp with time zone DEFAULT now() NOT NULL,
-	"last_seen" timestamp with time zone DEFAULT now() NOT NULL,
-	"expires_at" timestamp with time zone NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "rate_limits" (
 	"ip_hash" text NOT NULL,
 	"window_start" timestamp with time zone NOT NULL,
@@ -137,6 +131,7 @@ CREATE TABLE "rate_limits" (
 --> statement-breakpoint
 CREATE TABLE "referrals" (
 	"id" serial PRIMARY KEY NOT NULL,
+	"slug" text NOT NULL,
 	"country" text NOT NULL,
 	"region_code" text,
 	"category" text NOT NULL,
@@ -165,12 +160,15 @@ CREATE TABLE "sources" (
 	"scope" jsonb DEFAULT '["national"]'::jsonb NOT NULL,
 	"fetch_kind" text NOT NULL,
 	"url" text NOT NULL,
+	"fetch_config" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"license" text,
 	"refresh_interval" text,
+	"include_keywords" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"enabled" boolean DEFAULT true NOT NULL,
 	"last_fetch_at" timestamp with time zone,
 	"last_success_at" timestamp with time zone,
 	"consecutive_failures" integer DEFAULT 0 NOT NULL,
+	"zero_yield_streak" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -192,6 +190,7 @@ CREATE INDEX "documents_published_idx" ON "documents" USING btree ("published_at
 CREATE INDEX "documents_source_idx" ON "documents" USING btree ("source_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "events_bucket_idx" ON "events" USING btree ("bucket_date","country","region","topic","claim_cluster");--> statement-breakpoint
 CREATE INDEX "llm_calls_created_idx" ON "llm_calls" USING btree ("created_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "referrals_slug_idx" ON "referrals" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "referrals_country_idx" ON "referrals" USING btree ("country");--> statement-breakpoint
 CREATE INDEX "referrals_category_idx" ON "referrals" USING btree ("category");--> statement-breakpoint
 CREATE UNIQUE INDEX "regions_code_idx" ON "regions" USING btree ("code");--> statement-breakpoint
