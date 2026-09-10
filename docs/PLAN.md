@@ -77,8 +77,7 @@ DETERMINISTIC RETRIEVAL
 
 CALL 2 → synthesis in detected_lang over top evidence only, strict citation JSON
 
-CACHE by (claim_hash, lang), versioned; "updated since you checked" is computed
-client-side and never sent to the server.
+CACHE by (claim_hash, lang), versioned; "updated since you checked" is computed client-side and never sent to the server.
 ```
 
 ## Data model

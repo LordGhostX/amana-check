@@ -1,6 +1,6 @@
-import { sql } from "drizzle-orm";
-import { db, pgClient } from "@/lib/db";
+import { pgClient } from "@/lib/db";
 import { extractClaim } from "@/lib/pipeline/extract";
+import { corpusNewest } from "@/lib/retrieval/corpus";
 import { searchEvidence } from "@/lib/retrieval/search";
 import { assessEvidence } from "@/lib/trust/freshness";
 
@@ -17,14 +17,6 @@ function parseArgs(argv: string[]) {
     text: text || DEFAULT_CLAIM,
     country: flags.has("--ke") ? "KE" : flags.has("--ng") ? "NG" : undefined,
   };
-}
-
-async function corpusNewest(country?: string): Promise<Date | null> {
-  const rows = await db.execute(
-    sql`SELECT max(fetched_at) AS newest FROM documents ${country ? sql`WHERE country = ${country}` : sql``}`,
-  );
-  const row = (rows as unknown as { newest: string | null }[])[0];
-  return row?.newest ? new Date(row.newest) : null;
 }
 
 async function main() {

@@ -1,7 +1,8 @@
 import type { ChatMessage } from "@/lib/llm/client";
+import type { AnswerStatus } from "@/lib/trust/types";
 
 export const PROMPT_VERSIONS = {
-  extract: "extract-v1",
+  extract: "extract-v2",
   synthesize: "synthesize-v1",
 } as const;
 
@@ -20,10 +21,74 @@ Return JSON only, with exactly these fields:
   "location_hints": string[]      // places mentioned, canonical English names preferred (e.g. "Makurdi", "Benue State", "Garissa County")
 }
 
+Claim type definitions:
+- security_incident: violence, attacks, kidnapping, banditry, unrest, curfews, crime, or military/police operations.
+- flood_weather: floods, storms, drought, weather warnings, or related displacement.
+- health_outbreak: disease outbreaks, epidemics, vaccination campaigns, or health emergencies.
+- payment_service_scam: any message asking people to register, pay, send personal or banking details, or click a link to receive money, a grant, a job, or a government benefit. Choose this even when a real programme is named, if the message pushes registration, payment, or personal details.
+- civic_process: government procedures, deadlines, documents, elections, or policy announcements that do not ask for money or personal details.
+- reference: rights, entitlements, or how-to information that is not time-sensitive.
+- other: anything that does not fit.
+
 Rules: never invent locations; if none are stated use an empty array. Include no text outside the JSON object.`;
 
   return [
     { role: "system", content: system },
     { role: "user", content: text.slice(0, 4000) },
+  ];
+}
+
+export interface SynthesizeEvidence {
+  index: number;
+  publisher: string;
+  title: string;
+  publishedAt: Date | null;
+  content: string;
+}
+
+export interface SynthesizePromptInput {
+  claim: string;
+  answerLang: string;
+  status: AnswerStatus;
+  statusReason: string;
+  evidence: SynthesizeEvidence[];
+}
+
+export function buildSynthesizeMessages(
+  input: SynthesizePromptInput,
+): ChatMessage[] {
+  const system = `You are the answer-writing stage of Amana Check, a civic information tool for Nigeria and Kenya. You write for people who may be on a basic phone or a slow connection.
+
+You receive the user's claim, a fixed verification status decided by the system, and numbered evidence excerpts. You must never change or contradict the status. Use only the provided evidence: never add facts, names, phone numbers, links, or figures that are not in the evidence.
+
+Write in the user's detected language (${input.answerLang}). Keep sentences short and plain. No jargon and no advice beyond practical next steps.
+
+Return JSON only with exactly these fields:
+{
+  "what_we_know": string[],       // up to 3 short bullets. Every factual bullet must end with its citation marker, e.g. [S1] or [S2][S3]. Use an empty array when there is no evidence.
+  "what_we_dont_know": string[],  // up to 3 short bullets stating exactly what is unknown or uncertain, including why no verdict was possible.
+  "next_steps": [{"title": string, "detail": string}],  // up to 3 practical actions that require no payment and no invented contacts.
+  "answer_lang": string           // the language code you wrote in.
+}`;
+
+  const evidenceBlock =
+    input.evidence.length === 0
+      ? "EVIDENCE: none found."
+      : `EVIDENCE:\n${input.evidence
+          .map(
+            (item) =>
+              `[S${item.index}] (${item.publisher}, ${item.publishedAt ? item.publishedAt.toISOString().slice(0, 10) : "date unknown"}) ${item.title}\n${item.content.slice(0, 700)}`,
+          )
+          .join("\n\n")}`;
+
+  const user = `CLAIM: ${input.claim}
+STATUS: ${input.status}
+STATUS REASON (fixed by the system): ${input.statusReason}
+
+${evidenceBlock}`;
+
+  return [
+    { role: "system", content: system },
+    { role: "user", content: user },
   ];
 }

@@ -13,3 +13,19 @@ export const extractionSchema = z.object({
 });
 
 export type Extraction = z.infer<typeof extractionSchema>;
+
+export const synthesisSchema = z.object({
+  what_we_know: z.array(z.string().min(1).max(600)).max(3),
+  what_we_dont_know: z.array(z.string().min(1).max(600)).max(3),
+  next_steps: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(120),
+        detail: z.string().max(320).optional(),
+      }),
+    )
+    .max(3),
+  answer_lang: z.string().min(2).max(20),
+});
+
+export type Synthesis = z.infer<typeof synthesisSchema>;

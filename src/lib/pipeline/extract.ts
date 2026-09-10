@@ -12,6 +12,7 @@ export async function extractClaim(text: string): Promise<Extraction> {
       {
         stage: "extract",
         promptVersion: PROMPT_VERSIONS.extract,
+        temperature: 0,
         maxTokens: 2500,
         onCall: logLlmCall,
       },

@@ -16,6 +16,8 @@
     "db:seed": "bun run scripts/seed.ts",
     "db:studio": "drizzle-kit studio",
     "ingest": "bun run scripts/ingest.ts",
+    "ask": "bun run scripts/ask.ts",
+    "eval": "bun run scripts/eval.ts",
     "check:llm": "bun run scripts/check-llm.ts",
     "check:pipeline": "bun run scripts/check-pipeline.ts"
   },

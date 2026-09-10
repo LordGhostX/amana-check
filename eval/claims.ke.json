@@ -1,0 +1,35 @@
+{
+  "country": "KE",
+  "claims": [
+    {
+      "id": "ke-flood-01",
+      "text": "Kuna tahadhari ya mafuriko katika kaunti ya Garissa",
+      "expect": { "claim_type": "flood_weather", "lang": "sw" }
+    },
+    {
+      "id": "ke-security-01",
+      "text": "There was a bandit attack in Turkana County last night",
+      "expect": { "claim_type": "security_incident" }
+    },
+    {
+      "id": "ke-health-01",
+      "text": "Kuna mlipuko wa kipindupindu katika kaunti ya Nairobi",
+      "expect": { "claim_type": "health_outbreak", "lang": "sw" }
+    },
+    {
+      "id": "ke-scam-01",
+      "text": "The government is giving KES 20,000 to all registered youths through this link",
+      "expect": { "claim_type": "payment_service_scam" }
+    },
+    {
+      "id": "ke-civic-01",
+      "text": "The deadline for Maisha Namba registration has been extended",
+      "expect": { "claim_type": "civic_process" }
+    },
+    {
+      "id": "ke-rumour-01",
+      "text": "Watu wanasema kwamba kambi ya wakimbizi itafungwa wiki ijayo",
+      "expect": { "lang": "sw" }
+    }
+  ]
+}

@@ -8,7 +8,7 @@ Built for the OSF × Andela hackathon "Information you can trust". Primary track
 
 ## Status
 
-**Phase 2 — Trust engine in progress.** Ingestion, chunking, extraction, deterministic retrieval, and the freshness gate are working against a live corpus. Answer synthesis with citations and the eval harness are next. See [docs/PLAN.md](docs/PLAN.md).
+**Phase 2 — Trust engine complete.** Ingestion, extraction, deterministic IDF-weighted retrieval, the freshness gate, cited answer synthesis, persistence, and the eval harness all run against a live corpus. Latest eval: 14/14 claims pass, extraction type 13/13, language detection 7/7, ~$0.018 per full run. Phase 3 (citizen experience) is next. See [docs/PLAN.md](docs/PLAN.md).
 
 ## Stack
 
@@ -47,6 +47,8 @@ Generate `IP_HASH_SECRET` with `openssl rand -hex 32`.
 | `bun run db:seed`        | Load region registries and sources from `data/`                                   |
 | `bun run db:studio`      | Drizzle Studio                                                                    |
 | `bun run ingest`         | Fetch enabled sources into the corpus (flags: `--source`, `--country`, `--limit`) |
+| `bun run ask`            | Run the full pipeline on a claim (flags: `--ng`, `--ke`, `--fresh`)               |
+| `bun run eval`           | Run the eval harness and write `eval/results/latest.json`                         |
 | `bun run check:llm`      | Verify the fail-closed OpenRouter path                                            |
 | `bun run check:pipeline` | Run extraction → retrieval → freshness gate on a sample claim                     |
 

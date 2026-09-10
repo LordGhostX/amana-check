@@ -17,6 +17,7 @@ export const pgClient =
     max: 5,
     idle_timeout: 20,
     prepare: false,
+    onnotice: () => {},
   });
 
 if (process.env.NODE_ENV !== "production") {

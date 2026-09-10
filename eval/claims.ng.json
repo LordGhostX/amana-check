@@ -1,0 +1,45 @@
+{
+  "country": "NG",
+  "claims": [
+    {
+      "id": "ng-flood-01",
+      "text": "NEMA has issued a flood alert for Benue State",
+      "expect": { "claim_type": "flood_weather", "require_evidence": true }
+    },
+    {
+      "id": "ng-cholera-01",
+      "text": "There is a cholera outbreak in Tsakwaro village and the government is hiding it",
+      "expect": { "claim_type": "health_outbreak", "not_status": ["verified"] }
+    },
+    {
+      "id": "ng-pcm-01",
+      "text": "Dem talk say FG dey give N75,000, make you register with dis link, na true?",
+      "expect": { "claim_type": "payment_service_scam", "lang": "pcm" }
+    },
+    {
+      "id": "ng-ha-01",
+      "text": "An ce an samu barkewar kwalara a jihar Borno",
+      "expect": { "claim_type": "health_outbreak", "lang": "ha" }
+    },
+    {
+      "id": "ng-yo-01",
+      "text": "Wọ́n sọ pé ìjàlè kan wáyé ní ìpínlẹ̀ Kàdúná lánàá",
+      "expect": { "claim_type": "security_incident", "lang": "yo" }
+    },
+    {
+      "id": "ng-ig-01",
+      "text": "A na-ekwu na ọrịa ọgbụgbọ na-efe efe n'ógbè Borno",
+      "expect": { "claim_type": "health_outbreak", "lang": "ig" }
+    },
+    {
+      "id": "ng-scam-01",
+      "text": "Register for the Federal Government N50,000 grant at this link before Friday",
+      "expect": { "claim_type": "payment_service_scam" }
+    },
+    {
+      "id": "ng-security-01",
+      "text": "Gunmen attacked a village in Plateau State last night",
+      "expect": { "claim_type": "security_incident" }
+    }
+  ]
+}
