@@ -64,6 +64,16 @@ One more rule applies before a verdict is accepted. If the claim names a place a
 - The server parses every citation, rejects any reference that does not point at a provided excerpt, and requires at least one cited bullet whenever the status is verified or developing.
 - A rejected response gets one repair attempt with the rejection reason. If it fails again, Amana returns an extractive answer built from direct excerpts with citations, plus a notice that no synthesis was produced.
 
+## Model context budget
+
+The model never receives the corpus. It sees two small payloads:
+
+- Call 1 receives only the user's message, capped at 4,000 characters. No source text is included.
+- Retrieval runs in Postgres and returns at most 24 candidate chunks, which are scored and trimmed to the top 8.
+- Call 2 receives the claim, the status and reason fixed by the gate, up to three referral contacts, and those 8 excerpts. Each excerpt is capped at 700 characters, so the evidence block is at most about 5.6 KB. When retrieval returns nothing, the block reads `EVIDENCE: none found.`
+
+Evidence selection and the status decision stay deterministic. The model only phrases what the retrieved excerpts support, and the server validates every citation against them.
+
 ## Language handling
 
 - One model call detects the language, translates the claim into an English search query, extracts keywords and location hints, and classifies the claim type and sensitivity.
