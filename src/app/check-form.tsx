@@ -21,7 +21,6 @@ interface AskResponse {
     locationHints: string[];
   };
   versions: AnswerVersionInfo[];
-  preferredLang: string;
 }
 
 const CHECKS_KEY = "amana_checks_v1";

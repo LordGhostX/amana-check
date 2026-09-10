@@ -1,11 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { geoFromHeaders } from "@/lib/locale/geo";
 import { hashIp, ipFromHeaders } from "@/lib/locale/hash";
-import {
-  LOCALE_HINT_MIN_CONFIDENCE,
-  readLocaleHint,
-  writeLocaleHint,
-} from "@/lib/locale/hints";
 import { fallbackFromRequest } from "@/lib/locale/precedence";
 import { RATE_LIMITS, checkRateLimit } from "@/lib/locale/rate-limit";
 import { budgetExceeded } from "@/lib/llm/budget";
@@ -73,10 +68,6 @@ export async function POST(request: NextRequest) {
     geoRegionCode: geo.regionCode,
   });
 
-  const hintLang = ipHash ? await readLocaleHint(ipHash) : null;
-  const preferredLang =
-    request.cookies.get("amana_lang")?.value ?? hintLang ?? "en";
-
   try {
     const result = await answerClaim({
       text: parsed.data.text,
@@ -84,17 +75,6 @@ export async function POST(request: NextRequest) {
       fallbackRegionCode: fallback.regionCode,
       fallbackSource: fallback.source,
     });
-
-    if (
-      ipHash &&
-      result.extraction.language_confidence >= LOCALE_HINT_MIN_CONFIDENCE
-    ) {
-      await writeLocaleHint(
-        ipHash,
-        result.extraction.detected_lang,
-        Math.round(result.extraction.language_confidence),
-      );
-    }
 
     const response = NextResponse.json({
       answerId: result.answerId,
@@ -111,7 +91,6 @@ export async function POST(request: NextRequest) {
         locationHints: result.extraction.location_hints,
       },
       versions: result.versions,
-      preferredLang,
     });
 
     const cookieOptions = {
@@ -126,11 +105,6 @@ export async function POST(request: NextRequest) {
         cookieOptions,
       );
     }
-    response.cookies.set(
-      "amana_lang",
-      result.extraction.detected_lang,
-      cookieOptions,
-    );
 
     return response;
   } catch (error) {

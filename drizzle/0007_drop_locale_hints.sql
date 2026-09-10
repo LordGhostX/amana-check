@@ -1,0 +1,1 @@
+DROP TABLE "locale_hints" CASCADE;

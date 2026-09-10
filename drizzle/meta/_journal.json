@@ -50,6 +50,13 @@
       "when": 1789062161638,
       "tag": "0006_sources_fetch_config",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789064061365,
+      "tag": "0007_drop_locale_hints",
+      "breakpoints": true
     }
   ]
 }

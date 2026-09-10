@@ -6,7 +6,7 @@ This threat model covers the people who use Amana Check, the communities it repo
 
 - A website and JSON API for checking claims, plus an authenticated review console for a small operator team.
 - Inputs: message text in any language (typed or pasted). No accounts, no uploads, no location sharing.
-- Data: a curated source corpus; de-identified checks; aggregate verification-demand buckets; isolated HMAC keyed rate-limit and locale-hint rows.
+- Data: a curated source corpus; de-identified checks; aggregate verification-demand buckets; an isolated HMAC-keyed rate-limit table.
 - Model calls go to OpenRouter with hardcoded zero-retention and no-training routing; the request fails closed if no compliant endpoint exists.
 - Ingestion fetches only URLs from the curated registry. The curl fallback for bot-blocked feeds uses a fixed argument array, never a shell, so no user input can reach a command.
 
@@ -32,7 +32,7 @@ This threat model covers the people who use Amana Check, the communities it repo
 
 | #   | Threat                                                | Mitigation                                                                                                                                                                                                                                                                                                                              |
 | --- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T1  | Identifying a user from network metadata              | Raw IPs are never stored or logged. Only `HMAC-SHA256(IP_HASH_SECRET, ip)` is stored, in `rate_limits` and `locale_hints`, tables with no foreign key to `claims` and short or 30-day retention. The red-team suite asserts that `claims` has no identifier columns and that nothing references it.                                     |
+| T1  | Identifying a user from network metadata              | Raw IPs are never stored or logged. Only `HMAC-SHA256(IP_HASH_SECRET, ip)` is stored, in the isolated `rate_limits` table, which has no foreign key to `claims` and retains rows for one day. The red-team suite asserts that `claims` has no identifier columns and that nothing references it.                                        |
 | T2  | Content self-identification                           | Checks are stored de-identified and unlinked, but content can still name people or places. Access is admin-only, there is no bulk export of checks, the aggregate dashboard contains no free text, and the retention tradeoff is documented publicly. Residual risk remains and is acknowledged.                                        |
 | T3  | Provider retention or training on prompts             | Every request hardcodes `zdr: true` and `data_collection: "deny"`. If no compliant endpoint exists, the call raises and the request fails closed; it never silently degrades to a retaining provider. Prompt and completion content is never logged.                                                                                    |
 | T4  | Prompt injection embedded in a claim                  | User text is treated as untrusted data. The status is decided before generation by the deterministic gate and cannot be changed by the model. Citations are validated server-side, forged references are rejected, and the answer falls back to extracts after one repair attempt. Live injection tests are part of the red-team suite. |
@@ -44,7 +44,7 @@ This threat model covers the people who use Amana Check, the communities it repo
 | T10 | Corpus poisoning                                      | Only curated registry sources are ingested. User content never enters the corpus. Tiers constrain what can support a verdict, high-stakes claims route to human review, and the queue allows corrections with version history.                                                                                                          |
 | T11 | HTML or script injection through claims               | Inputs are Zod-bounded, generated text is validated, React escapes all rendering, and no `dangerouslySetInnerHTML` is used anywhere. The red-team suite asserts that script tags cannot survive synthesis.                                                                                                                              |
 | T12 | Harm from wrong referral numbers                      | Referrals are seeded from official pages with verification dates. Unverified numbers are labelled “confirm locally” in the interface and in model output, and the model is instructed never to invent contacts.                                                                                                                         |
-| T13 | Linkage between rate limiting and content             | Rate-limit and locale-hint rows carry only the HMAC hash and a time bucket. They are never joined to claims, and cleanup removes expired rows during ingestion.                                                                                                                                                                         |
+| T13 | Linkage between rate limiting and content             | Rate-limit rows carry only the HMAC hash and a time bucket. They are never joined to claims, and cleanup removes expired rows during ingestion.                                                                                                                                                                                         |
 
 ## Do-no-harm rules
 
@@ -70,5 +70,5 @@ This threat model covers the people who use Amana Check, the communities it repo
 - Disable a source by setting `enabled: false` in its registry and re-seeding.
 - Stop all model spend by setting `DAILY_COST_LIMIT_USD=0` and restarting, or by removing the OpenRouter key.
 - Purge the check corpus with `DELETE FROM claims;` if retention policy changes.
-- Rotate `IP_HASH_SECRET` to invalidate all locale hints and rate-limit keys; rotate `ADMIN_PASSCODE` to revoke operator access.
+- Rotate `IP_HASH_SECRET` to invalidate all rate-limit keys and admin sessions; rotate `ADMIN_PASSCODE` to revoke operator access.
 - Revoke a published answer by correcting it in the review console, which creates a new version that re-checkers will see.

@@ -88,7 +88,7 @@ docs/                     Plan, methodology, threat model, constraints, future w
 ## Privacy posture
 
 - `claims` stores de-identified input and has **no join keys** to any identifier.
-- IPs are only ever `HMAC-SHA256(IP_HASH_SECRET, ip)` for rate limits and locale hints; raw IPs are never stored or logged.
+- IPs are only ever `HMAC-SHA256(IP_HASH_SECRET, ip)` for rate limiting; raw IPs are never stored or logged.
 - LLM routing is hardcoded to zero-retention, no-training endpoints. If none is available the request fails closed rather than degrading.
 - Aggregated `events` are k≥3 and represent verification demand, not confirmed incidents.
 

@@ -161,8 +161,8 @@ export const ingestionRuns = pgTable("ingestion_runs", {
 
 /**
  * De-identified input corpus. Retained indefinitely by product decision.
- * No raw IPs, no device ids, no phone numbers, no join keys to locale_hints
- * or rate_limits may ever be added to this table.
+ * No raw IPs, no device ids, no phone numbers, and no join keys to
+ * rate_limits may ever be added to this table.
  */
 export const claims = pgTable(
   "claims",
@@ -296,20 +296,6 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
-
-export const localeHints = pgTable("locale_hints", {
-  ipHash: text("ip_hash").primaryKey(),
-  locale: text("locale").notNull(),
-  confidence: integer("confidence").notNull().default(0),
-  hits: integer("hits").notNull().default(1),
-  firstSeen: timestamp("first_seen", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  lastSeen: timestamp("last_seen", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
 
 export const rateLimits = pgTable(

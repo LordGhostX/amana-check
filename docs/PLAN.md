@@ -8,26 +8,26 @@ A community-facing trust layer for fragile information environments. A rumor or 
 
 ## Decision ledger
 
-| Area                | Decision                                                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Regions             | Nigeria (36 states + FCT) and Kenya (47 counties); geo **suggests** the corpus pack                              |
-| Location precedence | explicit location in claim > user-selected > cookie > Vercel region > national                                   |
-| UI                  | English only, browser-translatable; answer content in the detected language                                      |
-| Language            | any input → detect → translate to English for search → answer back; fallback English                             |
-| Model               | OpenRouter with an ordered fallback chain, default `deepseek/deepseek-v4.1-flash` → `deepseek/deepseek-v4-flash` |
-| Privacy invariants  | hardcoded `zdr: true`, `data_collection: "deny"`, `require_parameters: true`; **fail closed**                    |
-| Retrieval           | Postgres FTS + `pg_trgm` + deterministic scoring; no aliases, no fact cards, no LLM reranker                     |
-| Pipeline            | two model calls, Zod validation on both, retry once, deterministic safe fallback                                 |
-| Sourcing            | ingestion pipeline only; runtime never touches the web                                                           |
-| IP handling         | `HMAC-SHA256(IP_HASH_SECRET, ip)`; `locale_hints` (30d TTL) + `rate_limits` (short TTL), both isolated           |
-| Retention           | all inputs persisted indefinitely, de-identified and unlinked                                                    |
-| Delivery            | responsive website; offline/PWA/SMS/USSD documented as future direction                                          |
+| Area                | Decision                                                                                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Regions             | Nigeria (36 states + FCT) and Kenya (47 counties); geo **suggests** the corpus pack                                                                        |
+| Location precedence | explicit location in claim > user-selected > cookie > Vercel region > national                                                                             |
+| UI                  | English only, browser-translatable; answer content in the detected language                                                                                |
+| Language            | any input → detect → translate to English for search → answer back; fallback English                                                                       |
+| Model               | OpenRouter with an ordered fallback chain, default `deepseek/deepseek-v4.1-flash` → `deepseek/deepseek-v4-flash`                                           |
+| Privacy invariants  | hardcoded `zdr: true`, `data_collection: "deny"`, `require_parameters: true`; **fail closed**                                                              |
+| Retrieval           | Postgres FTS + `pg_trgm` + deterministic scoring; no aliases, no fact cards, no LLM reranker                                                               |
+| Pipeline            | two model calls, Zod validation on both, retry once, deterministic safe fallback                                                                           |
+| Sourcing            | ingestion pipeline only; runtime never touches the web                                                                                                     |
+| IP handling         | `HMAC-SHA256(IP_HASH_SECRET, ip)` for rate limiting only; `locale_hints` was removed before deployment when language preference storage proved unnecessary |
+| Retention           | all inputs persisted indefinitely, de-identified and unlinked                                                                                              |
+| Delivery            | responsive website; offline/PWA/SMS/USSD documented as future direction                                                                                    |
 
 ## Retention tradeoff (deliberate)
 
 Inputs are stored unredacted and unlinked. "Unlinked" is **not** "non-identifying": message text can contain names, locations, and personal details. Guardrails built in:
 
-- No join key connects `claims` to `locale_hints`, `rate_limits`, or anything else.
+- No join key connects `claims` to `rate_limits` or anything else.
 - Admin-only access, no bulk export.
 - Claims are never surfaced to other users; only aggregated `events` rows (k≥3).
 - In-app notice: "Checks may be stored without your identity to improve Amana."
@@ -82,7 +82,7 @@ CACHE by (claim_hash, lang), versioned; "updated since you checked" is computed 
 
 ## Data model
 
-`regions` · `sources` (`refresh_interval`, fetch health) · `documents` · `document_chunks` (tsvector, page/anchor) · `document_versions` · `ingestion_runs` · `claims` (de-identified, no join keys) · `answers` + `answer_versions` · `referrals` · `events` (aggregate only) · `feedback` · `locale_hints` · `rate_limits` · `llm_calls`.
+`regions` · `sources` (`refresh_interval`, fetch health) · `documents` · `document_chunks` (tsvector, page/anchor) · `document_versions` · `ingestion_runs` · `claims` (de-identified, no join keys) · `answers` + `answer_versions` · `referrals` · `events` (aggregate only) · `feedback` · `rate_limits` · `llm_calls`.
 
 ## Phases
 
