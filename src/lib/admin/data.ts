@@ -53,27 +53,24 @@ export async function listReviewQueue(
   }));
 }
 
-async function loadAnswer(answerId: number) {
-  const rows = await db
-    .select()
-    .from(answers)
-    .where(eq(answers.id, answerId))
-    .limit(1);
-  const answer = rows[0];
-  if (!answer) throw new Error(`answer ${answerId} not found`);
-  return answer;
-}
-
 export async function approveAnswer(
   answerId: number,
   reviewer: string,
   note?: string,
 ): Promise<{ version: number; status: AnswerStatus }> {
-  const answer = await loadAnswer(answerId);
-  const version = answer.version + 1;
   const reviewedAt = new Date();
 
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .select()
+      .from(answers)
+      .where(eq(answers.id, answerId))
+      .for("update")
+      .limit(1);
+    const answer = rows[0];
+    if (!answer) throw new Error(`answer ${answerId} not found`);
+
+    const version = answer.version + 1;
     await tx
       .update(answers)
       .set({
@@ -93,9 +90,9 @@ export async function approveAnswer(
       changeReason: "human_reviewed",
       reviewer,
     });
-  });
 
-  return { version, status: answer.status };
+    return { version, status: answer.status };
+  });
 }
 
 export interface CorrectionInput {
@@ -110,23 +107,32 @@ export async function correctAnswer(
   reviewer: string,
   input: CorrectionInput,
 ): Promise<{ version: number; status: AnswerStatus }> {
-  const answer = await loadAnswer(answerId);
-  const status = input.status ?? answer.status;
   const reviewedAt = new Date();
-  const version = answer.version + 1;
 
-  const payload: AnswerPayload = {
-    ...answer.payload,
-    status,
-    statusReason: input.note
-      ? `Reviewed by a person: ${input.note}`
-      : answer.payload.statusReason,
-    whatWeKnow: input.whatWeKnow ?? answer.payload.whatWeKnow,
-    whatWeDontKnow: input.whatWeDontKnow ?? answer.payload.whatWeDontKnow,
-    checkedAt: reviewedAt.toISOString(),
-  };
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .select()
+      .from(answers)
+      .where(eq(answers.id, answerId))
+      .for("update")
+      .limit(1);
+    const answer = rows[0];
+    if (!answer) throw new Error(`answer ${answerId} not found`);
 
-  await db.transaction(async (tx) => {
+    const status = input.status ?? answer.status;
+    const version = answer.version + 1;
+
+    const payload: AnswerPayload = {
+      ...answer.payload,
+      status,
+      statusReason: input.note
+        ? `Reviewed by a person: ${input.note}`
+        : answer.payload.statusReason,
+      whatWeKnow: input.whatWeKnow ?? answer.payload.whatWeKnow,
+      whatWeDontKnow: input.whatWeDontKnow ?? answer.payload.whatWeDontKnow,
+      checkedAt: reviewedAt.toISOString(),
+    };
+
     await tx
       .update(answers)
       .set({
@@ -148,9 +154,9 @@ export async function correctAnswer(
       changeReason: "human_corrected",
       reviewer,
     });
-  });
 
-  return { version, status };
+    return { version, status };
+  });
 }
 
 export interface DemandBucket {
@@ -196,7 +202,7 @@ async function demandRows(
       count,
       status_distribution
     FROM events
-    WHERE bucket_date >= (current_date - ${days}::int)
+    WHERE bucket_date > (current_date - ${days}::int)
       AND count >= 3
     ORDER BY bucket_date DESC, count DESC
     LIMIT ${limit}

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { answerVersions, answers, claims } from "@/lib/db/schema";
 import { PROMPT_VERSIONS } from "@/lib/llm/prompts";
@@ -16,7 +16,7 @@ import {
   capForUnmatchedLocation,
   type EvidenceAssessment,
 } from "@/lib/trust/freshness";
-import type { AnswerPayload, AnswerStatus } from "@/lib/trust/types";
+import type { AnswerPayload, AnswerStatus, ClaimType } from "@/lib/trust/types";
 import { clusterKeyFor, recordVerificationDemand } from "./events";
 import { extractClaim } from "./extract";
 import type { Extraction } from "./schemas";
@@ -28,6 +28,7 @@ export interface AskOptions {
   fallbackRegionCode?: string;
   fallbackSource?: LocationSource;
   bypassCache?: boolean;
+  recordDemand?: boolean;
 }
 
 export interface AnswerVersionInfo {
@@ -50,14 +51,40 @@ export interface AskResult {
   versions: AnswerVersionInfo[];
 }
 
-export function claimHashFor(extraction: Extraction, country?: string): string {
+export function claimHashFor(
+  extraction: Extraction,
+  country?: string,
+  regionCode?: string,
+): string {
   const normalized = extraction.english_query
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
   return createHash("sha256")
-    .update(`${normalized}|${extraction.claim_type}|${country ?? ""}`)
+    .update(
+      `${normalized}|${extraction.claim_type}|${country ?? ""}|${regionCode ?? ""}`,
+    )
     .digest("hex");
+}
+
+async function recordDemandSafely(
+  extraction: Extraction,
+  country: string | undefined,
+  regionCode: string | undefined,
+  claimType: ClaimType,
+  status: AnswerStatus,
+): Promise<void> {
+  try {
+    await recordVerificationDemand({
+      country,
+      regionCode,
+      claimType,
+      clusterKey: clusterKeyFor(extraction, country),
+      status,
+    });
+  } catch {
+    // Demand aggregation must never break answering.
+  }
 }
 
 async function loadVersions(answerId: number): Promise<AnswerVersionInfo[]> {
@@ -103,7 +130,11 @@ function cachedLocation(payload: AnswerPayload): ResolvedLocation {
 
 export async function answerClaim(options: AskOptions): Promise<AskResult> {
   const extraction = await extractClaim(options.text);
-  const claimHash = claimHashFor(extraction, options.fallbackCountry);
+  const claimHash = claimHashFor(
+    extraction,
+    options.fallbackCountry,
+    options.fallbackRegionCode,
+  );
   const lang = extraction.detected_lang;
 
   if (!options.bypassCache) {
@@ -114,6 +145,15 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
       .limit(1);
     const cached = cachedRows[0];
     if (cached) {
+      if (options.recordDemand !== false) {
+        await recordDemandSafely(
+          extraction,
+          cached.payload.location?.country,
+          cached.payload.location?.regionCode,
+          cached.claimType,
+          cached.payload.status,
+        );
+      }
       return {
         answerId: cached.id,
         claimHash,
@@ -163,6 +203,7 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
   const referralRows = await referralsFor(
     location.country,
     categoriesForClaimType(extraction.claim_type),
+    { regionCode: location.regionCode },
   );
 
   const payload = await synthesizeAnswer({
@@ -196,60 +237,48 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     locationText: extraction.location_hints.join(", ") || null,
   });
 
-  const existingRows = await db
-    .select({ id: answers.id, version: answers.version })
-    .from(answers)
-    .where(and(eq(answers.claimHash, claimHash), eq(answers.lang, lang)))
-    .limit(1);
-  const existing = existingRows[0];
-  let answerId: number;
-  let version: number;
-  let changeReason: string;
-
-  if (!existing) {
-    const inserted = await db
-      .insert(answers)
-      .values({
-        claimHash,
-        lang,
+  const upserted = await db
+    .insert(answers)
+    .values({
+      claimHash,
+      lang,
+      status: payload.status,
+      claimType: extraction.claim_type,
+      payload,
+      promptVersion: PROMPT_VERSIONS.synthesize,
+      version: 1,
+    })
+    .onConflictDoUpdate({
+      target: [answers.claimHash, answers.lang],
+      set: {
         status: payload.status,
         claimType: extraction.claim_type,
         payload,
         promptVersion: PROMPT_VERSIONS.synthesize,
-        version: 1,
-      })
-      .returning({ id: answers.id });
-    answerId = inserted[0]!.id;
-    version = 1;
-    changeReason = "initial";
-  } else {
-    answerId = existing.id;
-    version = existing.version + 1;
-    changeReason = "recheck";
-    await db
-      .update(answers)
-      .set({ status: payload.status, payload, version, updatedAt: new Date() })
-      .where(eq(answers.id, answerId));
-  }
+        version: sql`${answers.version} + 1`,
+        updatedAt: new Date(),
+      },
+    })
+    .returning({ id: answers.id, version: answers.version });
+  const answerId = upserted[0]!.id;
+  const version = upserted[0]!.version;
 
   await db.insert(answerVersions).values({
     answerId,
     version,
     status: payload.status,
     payload,
-    changeReason,
+    changeReason: version === 1 ? "initial" : "recheck",
   });
 
-  try {
-    await recordVerificationDemand({
-      country: location.country,
-      regionCode: location.regionCode,
-      claimType: extraction.claim_type,
-      clusterKey: clusterKeyFor(extraction, location.country),
-      status: payload.status,
-    });
-  } catch {
-    // Demand aggregation must never break answering.
+  if (options.recordDemand !== false) {
+    await recordDemandSafely(
+      extraction,
+      location.country,
+      location.regionCode,
+      extraction.claim_type,
+      payload.status,
+    );
   }
 
   return {

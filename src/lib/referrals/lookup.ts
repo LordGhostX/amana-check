@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { referrals } from "@/lib/db/schema";
 import type { ClaimType } from "@/lib/trust/types";
@@ -32,17 +32,29 @@ export function categoriesForClaimType(claimType: ClaimType): string[] {
 export async function referralsFor(
   country: string | undefined,
   categories: string[],
-  limit = 3,
+  options: { regionCode?: string; limit?: number } = {},
 ): Promise<ReferralRecord[]> {
   if (categories.length === 0) return [];
+  const { regionCode, limit = 3 } = options;
   const conditions = [inArray(referrals.category, categories)];
   if (country) conditions.push(eq(referrals.country, country));
+  if (regionCode) {
+    const regionCondition = or(
+      isNull(referrals.regionCode),
+      eq(referrals.regionCode, regionCode),
+    );
+    if (regionCondition) conditions.push(regionCondition);
+  }
 
   const rows = await db
     .select()
     .from(referrals)
     .where(and(...conditions))
-    .orderBy(sql`${referrals.verifiedAt} DESC NULLS LAST`, referrals.id)
+    .orderBy(
+      referrals.regionCode,
+      sql`${referrals.verifiedAt} DESC NULLS LAST`,
+      referrals.id,
+    )
     .limit(limit);
 
   return rows.map((row) => ({

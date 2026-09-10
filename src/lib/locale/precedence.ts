@@ -29,6 +29,10 @@ interface RegionRow {
 
 const SELECT_REGION = sql`SELECT code, name, country, level FROM regions`;
 
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (character) => `\\${character}`);
+}
+
 function firstRow(rows: unknown): RegionRef | null {
   const row = (rows as unknown as RegionRow[])[0];
   if (!row) return null;
@@ -55,7 +59,7 @@ export async function findRegionByName(
   for (const candidate of candidates) {
     const rows = await db.execute(sql`
       ${SELECT_REGION}
-      WHERE name ILIKE ${`%${candidate}%`} OR similarity(name, ${candidate}) > 0.45
+      WHERE name ILIKE ${`%${escapeLike(candidate)}%`} OR similarity(name, ${candidate}) > 0.45
       ORDER BY
         CASE WHEN lower(name) = lower(${candidate}) THEN 0 ELSE 1 END,
         similarity(name, ${candidate}) DESC,

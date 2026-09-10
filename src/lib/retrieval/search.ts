@@ -96,7 +96,7 @@ async function computeIdf(
 
   for (const term of terms) {
     const rows = await db.execute(sql`
-      SELECT count(*)::int AS df
+      SELECT count(distinct d.id)::int AS df
       FROM document_chunks c
       JOIN documents d ON d.id = c.document_id
       WHERE to_tsvector('english', c.content) @@ to_tsquery('english', ${term})

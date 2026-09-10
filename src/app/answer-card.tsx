@@ -210,35 +210,42 @@ export function AnswerCard({
             Evidence
           </h2>
           <div className="flex flex-col gap-2">
-            {payload.evidence.map((item, index) => (
-              <details
-                key={`${item.documentId}-${index}`}
-                className="rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
-              >
-                <summary className="cursor-pointer text-sm text-zinc-800 dark:text-zinc-200">
-                  {item.publisher} · T{item.tier} ·{" "}
-                  {formatDate(item.publishedAt)}
-                </summary>
-                <div className="mt-2 flex flex-col gap-2">
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {item.title}
-                  </p>
-                  {item.excerpt ? (
-                    <p className="text-sm text-zinc-500 italic dark:text-zinc-500">
-                      &quot;{item.excerpt}&quot;
+            {payload.evidence.map((item, index) => {
+              const sourceUrl = /^https?:\/\//i.test(item.url)
+                ? item.url
+                : null;
+              return (
+                <details
+                  key={`${item.documentId}-${index}`}
+                  className="rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
+                >
+                  <summary className="cursor-pointer text-sm text-zinc-800 dark:text-zinc-200">
+                    {item.publisher} · T{item.tier} ·{" "}
+                    {formatDate(item.publishedAt)}
+                  </summary>
+                  <div className="mt-2 flex flex-col gap-2">
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      {item.title}
                     </p>
-                  ) : null}
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium text-sky-700 underline dark:text-sky-400"
-                  >
-                    Open original source
-                  </a>
-                </div>
-              </details>
-            ))}
+                    {item.excerpt ? (
+                      <p className="text-sm text-zinc-500 italic dark:text-zinc-500">
+                        &quot;{item.excerpt}&quot;
+                      </p>
+                    ) : null}
+                    {sourceUrl ? (
+                      <a
+                        href={sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-sky-700 underline dark:text-sky-400"
+                      >
+                        Open original source
+                      </a>
+                    ) : null}
+                  </div>
+                </details>
+              );
+            })}
           </div>
         </section>
       ) : null}

@@ -87,6 +87,7 @@ async function runFile(file: EvalFile): Promise<ClaimResult[]> {
         text: claim.text,
         fallbackCountry: file.country,
         bypassCache: true,
+        recordDemand: false,
       });
       const failures = evaluate(claim, result);
       results.push({
@@ -129,6 +130,7 @@ function summarize(file: EvalFile, results: ClaimResult[]) {
     const expect = file.claims[index]?.expect;
     return (
       expect?.claim_type !== undefined &&
+      result.status !== "error" &&
       !result.failures.some((failure) =>
         failure.startsWith("claim_type expected"),
       )
@@ -138,6 +140,7 @@ function summarize(file: EvalFile, results: ClaimResult[]) {
     const expect = file.claims[index]?.expect;
     return (
       expect?.lang !== undefined &&
+      result.status !== "error" &&
       !result.failures.some((failure) => failure.startsWith("lang expected"))
     );
   }).length;
@@ -148,11 +151,13 @@ function summarize(file: EvalFile, results: ClaimResult[]) {
     const expect = file.claims[index]?.expect;
     return (
       expect?.require_evidence === true &&
+      result.status !== "error" &&
       !result.failures.some((failure) =>
         failure.startsWith("expected evidence"),
       )
     );
   }).length;
+  const errors = results.filter((result) => result.status === "error").length;
   const citationEligible = results.filter(
     (result) =>
       (result.status === "verified" || result.status === "developing") &&
@@ -176,6 +181,7 @@ function summarize(file: EvalFile, results: ClaimResult[]) {
       citationEligible.length > 0
         ? `${citationPassed}/${citationEligible.length}`
         : "n/a",
+    errors,
     statuses: results.reduce<Record<string, number>>((acc, result) => {
       acc[result.status] = (acc[result.status] ?? 0) + 1;
       return acc;

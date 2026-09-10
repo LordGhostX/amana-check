@@ -334,7 +334,7 @@ function QueueItemCard({ item }: { item: ReviewQueueItem }) {
         <input
           value={note}
           onChange={(event) => setNote(event.target.value)}
-          placeholder="Reviewer note (shown in version history)"
+          placeholder="Reviewer note (kept with this review)"
           className="min-w-56 flex-1 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
         <button
