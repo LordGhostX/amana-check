@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { z } from "zod";
 import { geoFromHeaders } from "@/lib/locale/geo";
 import { hashIp, ipFromHeaders } from "@/lib/locale/hash";
 import {
@@ -9,16 +8,12 @@ import {
 } from "@/lib/locale/hints";
 import { fallbackFromRequest } from "@/lib/locale/precedence";
 import { RATE_LIMITS, checkRateLimit } from "@/lib/locale/rate-limit";
+import { budgetExceeded } from "@/lib/llm/budget";
 import { answerClaim } from "@/lib/pipeline/answer";
+import { askInputSchema } from "@/lib/pipeline/input";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const bodySchema = z.object({
-  text: z.string().trim().min(3).max(4000),
-  country: z.enum(["NG", "KE"]).optional(),
-  regionCode: z.string().trim().min(2).max(10).optional(),
-});
 
 function clientIpHash(request: NextRequest): string | null {
   const ip = ipFromHeaders(request.headers);
@@ -44,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  const parsed = bodySchema.safeParse(body);
+  const parsed = askInputSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       {
@@ -55,6 +50,17 @@ export async function POST(request: NextRequest) {
         })),
       },
       { status: 400 },
+    );
+  }
+
+  if (await budgetExceeded()) {
+    return NextResponse.json(
+      {
+        error: "budget_exhausted",
+        message:
+          "Amana has reached its daily check budget. Please try again tomorrow.",
+      },
+      { status: 503 },
     );
   }
 

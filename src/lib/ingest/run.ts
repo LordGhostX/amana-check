@@ -11,6 +11,7 @@ import {
 import { chunkText } from "./chunk";
 import { htmlToText } from "./clean";
 import { fetchFeed, type FeedItem } from "./rss";
+import { cleanupExpired } from "@/lib/maintenance";
 
 export interface IngestOptions {
   sourceId?: string;
@@ -144,6 +145,12 @@ async function upsertDocument(
 export async function ingestSources(
   options: IngestOptions = {},
 ): Promise<IngestSummary> {
+  try {
+    await cleanupExpired();
+  } catch {
+    // Cleanup must never block ingestion.
+  }
+
   const summary: IngestSummary = {
     sourcesProcessed: 0,
     sourcesFailed: 0,

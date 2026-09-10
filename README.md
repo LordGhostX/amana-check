@@ -8,7 +8,7 @@ Built for the OSF × Andela hackathon "Information you can trust". Primary track
 
 ## Status
 
-**Phase 2 — Trust engine complete.** Ingestion, extraction, deterministic IDF-weighted retrieval, the freshness gate, cited answer synthesis, persistence, and the eval harness all run against a live corpus. Latest eval: 14/14 claims pass, extraction type 13/13, language detection 7/7, ~$0.018 per full run. Phase 3 (citizen experience) is next. See [docs/PLAN.md](docs/PLAN.md).
+**Phases 1–5 complete.** The corpus, trust engine, citizen experience, accountability loop, and hardening are built and verified. Latest eval: 14/14 claims pass, extraction type 13/13, language detection 7/7, about $0.018 per full run. The red-team suite verifies privacy invariants, admin-session integrity, input bounds, citation enforcement, and live prompt-injection resistance. See [docs/PLAN.md](docs/PLAN.md) for the frozen plan and [docs/methodology.md](docs/methodology.md) for how decisions are made.
 
 ## Stack
 
@@ -51,21 +51,36 @@ Generate `IP_HASH_SECRET` with `openssl rand -hex 32`.
 | `bun run eval`           | Run the eval harness and write `eval/results/latest.json`                         |
 | `bun run check:llm`      | Verify the fail-closed OpenRouter path                                            |
 | `bun run check:pipeline` | Run extraction → retrieval → freshness gate on a sample claim                     |
+| `bun run red-team`       | Run static privacy checks and live adversarial claims                             |
+
+## Docs
+
+- [docs/methodology.md](docs/methodology.md) — how answers are produced and validated
+- [docs/threat-model.md](docs/threat-model.md) — assets, threats, mitigations, residual risk
+- [docs/constraints-matrix.md](docs/constraints-matrix.md) — the seven brief constraints mapped to code
+- [docs/future-directions.md](docs/future-directions.md) — SMS, USSD, offline, native review, expansion
+- [docs/PLAN.md](docs/PLAN.md) — the frozen plan
 
 ## Layout
 
 ```
-src/app/                  English UI
+src/app/                  UI, answer card, admin console, API routes
+src/lib/admin/            Signed sessions, review queue, dashboard, brief export
 src/lib/db/               Drizzle schema + client
-src/lib/llm/              Fail-closed OpenRouter client + call logging
-src/lib/locale/           HMAC IP hashing, Vercel geo headers
-src/lib/registry/         Source/region registry schemas + loaders
-src/lib/trust/            Answer and claim types
+src/lib/ingest/           RSS adapter, cleaning, chunking, upserts
+src/lib/llm/              Fail-closed OpenRouter client, prompts, budget
+src/lib/locale/           HMAC IP hashing, geo headers, location precedence
+src/lib/pipeline/         Extraction, synthesis, orchestration, events
+src/lib/referrals/        Action and hotline library
+src/lib/registry/         Source/region/referral schemas + loaders
+src/lib/retrieval/        IDF-weighted full-text search
+src/lib/trust/            Answer/claim types and the freshness gate
 data/regions/             Nigeria (36 + FCT) and Kenya (47 counties)
 data/sources/             Source registries with tiers, licenses, health
+data/referrals/           Verified and clearly-labelled contact pathways
 drizzle/                  Generated SQL migrations
-scripts/                  Seed, ingestion, and checks
-docs/                     Frozen plan
+scripts/                  Seed, ingestion, ask, eval, red-team
+docs/                     Plan, methodology, threat model, constraints, future work
 ```
 
 ## Privacy posture

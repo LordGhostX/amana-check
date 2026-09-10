@@ -34,7 +34,7 @@ export function citationRefs(text: string): number[] {
   return refs;
 }
 
-function validateSynthesis(
+export function validateSynthesis(
   synthesis: Synthesis,
   evidenceCount: number,
   status: AnswerStatus,
@@ -149,7 +149,7 @@ export function fallbackPayload(
     whatWeKnow,
     whatWeDontKnow: [
       problem
-        ? `Amana could not produce a verified summary (${problem}). The bullets above are direct excerpts, not a reviewed synthesis.`
+        ? "Amana could not produce a reviewed synthesis, so the bullets above are direct excerpts from the sources, not a verified summary."
         : "Amana could not run its full synthesis step, so these are direct excerpts from the sources above, not a verified summary.",
     ],
     evidence: input.evidence.map(toEvidenceItem),
