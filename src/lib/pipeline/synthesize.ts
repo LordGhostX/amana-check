@@ -1,6 +1,7 @@
 import { callStructured, type ChatMessage } from "@/lib/llm/client";
 import { logLlmCall } from "@/lib/llm/log";
 import { buildSynthesizeMessages, PROMPT_VERSIONS } from "@/lib/llm/prompts";
+import type { SynthesizeReferral } from "@/lib/llm/prompts";
 import type { RetrievedChunk } from "@/lib/retrieval/search";
 import type { EvidenceAssessment } from "@/lib/trust/freshness";
 import type {
@@ -16,6 +17,7 @@ export interface SynthesizeInput {
   extraction: Extraction;
   assessment: EvidenceAssessment;
   evidence: RetrievedChunk[];
+  referrals?: SynthesizeReferral[];
   country?: string;
   regionCode?: string;
   locationLabel?: string;
@@ -132,6 +134,13 @@ export function fallbackPayload(
       (chunk, index) =>
         `${chunk.publisher}: ${truncate(chunk.content, 180)} [S${index + 1}]`,
     );
+  const referralSteps: NextStep[] = (input.referrals ?? [])
+    .slice(0, 2)
+    .map((referral) => ({
+      title: `Contact ${referral.name}`,
+      detail: `${referral.phone}${referral.verified ? "" : " (confirm locally)"}${referral.description ? ` — ${referral.description}` : ""}`,
+    }));
+
   return {
     claim: input.extraction.claim_text,
     answerLang: input.extraction.detected_lang,
@@ -145,6 +154,7 @@ export function fallbackPayload(
     ],
     evidence: input.evidence.map(toEvidenceItem),
     nextSteps: [
+      ...referralSteps,
       {
         title: "Check with a trusted local source",
         detail:
@@ -155,7 +165,7 @@ export function fallbackPayload(
         detail:
           "Unverified messages can cause panic or harm. Share the original source instead.",
       },
-    ],
+    ].slice(0, 3),
     location: locationOf(input),
     machineTranslated: input.extraction.detected_lang !== "en",
     checkedAt: new Date().toISOString(),
@@ -170,6 +180,7 @@ export async function synthesizeAnswer(
     answerLang: input.extraction.detected_lang,
     status: input.assessment.status,
     statusReason: input.assessment.reason,
+    referrals: input.referrals ?? [],
     evidence: input.evidence.map((chunk, index) => ({
       index: index + 1,
       publisher: chunk.publisher,

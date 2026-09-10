@@ -3,8 +3,10 @@ import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import {
   regionFileSchema,
+  referralFileSchema,
   sourceFileSchema,
   type RegionFile,
+  type ReferralFile,
   type SourceFile,
 } from "./schema";
 
@@ -20,4 +22,9 @@ export function loadRegionFile(slug: CountrySlug): RegionFile {
 export function loadSourceFile(slug: CountrySlug): SourceFile {
   const raw = readFileSync(join(DATA_DIR, "sources", `${slug}.yml`), "utf8");
   return sourceFileSchema.parse(parseYaml(raw));
+}
+
+export function loadReferralFile(slug: CountrySlug): ReferralFile {
+  const raw = readFileSync(join(DATA_DIR, "referrals", `${slug}.json`), "utf8");
+  return referralFileSchema.parse(JSON.parse(raw));
 }

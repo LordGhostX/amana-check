@@ -34,12 +34,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             >
               Amana Check
             </Link>
-            <Link
-              href="/methodology"
-              className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              Method
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/methodology"
+                className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                Method
+              </Link>
+              <Link
+                href="/help"
+                className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                Get help
+              </Link>
+            </div>
           </nav>
         </header>
         {children}

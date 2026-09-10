@@ -195,6 +195,10 @@ export const answers = pgTable(
     payload: jsonb("payload").$type<AnswerPayload>().notNull(),
     promptVersion: text("prompt_version").notNull(),
     version: integer("version").notNull().default(1),
+    reviewState: text("review_state").notNull().default("unreviewed"),
+    reviewNote: text("review_note"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewer: text("reviewer"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -216,6 +220,7 @@ export const answerVersions = pgTable(
     status: text("status").$type<AnswerStatus>().notNull(),
     payload: jsonb("payload").$type<AnswerPayload>().notNull(),
     changeReason: text("change_reason"),
+    reviewer: text("reviewer"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -243,8 +248,8 @@ export const referrals = pgTable(
 );
 
 /**
- * Aggregated verification demand only. Never expose what a single user asked.
- * k >= 3 suppression is applied before rows are written.
+ * Aggregated verification demand only. Rows carry no identity and no free
+ * text. The peacebuilder dashboard applies k >= 3 suppression at read time.
  */
 export const events = pgTable(
   "events",

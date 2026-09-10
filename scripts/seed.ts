@@ -1,7 +1,8 @@
 import { sql } from "drizzle-orm";
 import { db, pgClient } from "@/lib/db";
-import { regions, sources } from "@/lib/db/schema";
+import { referrals, regions, sources } from "@/lib/db/schema";
 import {
+  loadReferralFile,
   loadRegionFile,
   loadSourceFile,
   type CountrySlug,
@@ -12,6 +13,9 @@ const SLUGS: CountrySlug[] = ["nigeria", "kenya"];
 async function main() {
   let regionTotal = 0;
   let sourceTotal = 0;
+  let referralTotal = 0;
+
+  await db.delete(referrals);
 
   for (const slug of SLUGS) {
     const regionFile = loadRegionFile(slug);
@@ -72,12 +76,30 @@ async function main() {
       });
     sourceTotal += sourceRows.length;
 
+    const referralFile = loadReferralFile(slug);
+    const referralRows = referralFile.referrals.map((referral) => ({
+      country: referral.country,
+      regionCode: referral.regionCode ?? null,
+      category: referral.category,
+      name: referral.name,
+      phone: referral.phone,
+      description: referral.description ?? null,
+      url: referral.url ?? null,
+      verifiedAt: referral.verifiedAt ? new Date(referral.verifiedAt) : null,
+    }));
+    if (referralRows.length > 0) {
+      await db.insert(referrals).values(referralRows);
+    }
+    referralTotal += referralRows.length;
+
     console.log(
-      `${regionFile.name}: ${regionRows.length} regions, ${sourceRows.length} sources`,
+      `${regionFile.name}: ${regionRows.length} regions, ${sourceRows.length} sources, ${referralRows.length} referrals`,
     );
   }
 
-  console.log(`Seeded ${regionTotal} regions and ${sourceTotal} sources.`);
+  console.log(
+    `Seeded ${regionTotal} regions, ${sourceTotal} sources, and ${referralTotal} referrals.`,
+  );
 }
 
 main()

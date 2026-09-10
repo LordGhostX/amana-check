@@ -1,0 +1,25 @@
+{
+  "country": "NG",
+  "referrals": [
+    {
+      "country": "NG",
+      "regionCode": null,
+      "category": "emergency",
+      "name": "National emergency line",
+      "phone": "112",
+      "description": "Toll-free national emergency number for police, fire, and ambulance response.",
+      "url": "https://nema.gov.ng/",
+      "verifiedAt": null
+    },
+    {
+      "country": "NG",
+      "regionCode": null,
+      "category": "health",
+      "name": "NCDC toll-free call centre",
+      "phone": "6232",
+      "description": "Nigeria Centre for Disease Control and Prevention: disease reporting, outbreak guidance, and public health alerts.",
+      "url": "https://ncdc.gov.ng/contact",
+      "verifiedAt": "2026-09-10"
+    }
+  ]
+}

@@ -10,6 +10,7 @@ import {
 } from "@/lib/locale/precedence";
 import { corpusNewest } from "@/lib/retrieval/corpus";
 import { searchEvidence, type RetrievedChunk } from "@/lib/retrieval/search";
+import { categoriesForClaimType, referralsFor } from "@/lib/referrals/lookup";
 import { assessEvidence, type EvidenceAssessment } from "@/lib/trust/freshness";
 import type { AnswerPayload, AnswerStatus } from "@/lib/trust/types";
 import { clusterKeyFor, recordVerificationDemand } from "./events";
@@ -151,11 +152,22 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     newest,
   );
 
+  const referralRows = await referralsFor(
+    location.country,
+    categoriesForClaimType(extraction.claim_type),
+  );
+
   const payload = await synthesizeAnswer({
     claim: extraction.claim_text,
     extraction,
     assessment,
     evidence,
+    referrals: referralRows.map((row) => ({
+      name: row.name,
+      phone: row.phone ?? "no phone listed",
+      description: row.description,
+      verified: row.verifiedAt !== null,
+    })),
     country: location.country,
     regionCode: location.regionCode,
     locationLabel: location.regionName ?? location.country,

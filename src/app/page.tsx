@@ -78,6 +78,9 @@ export default async function Home() {
           Checks are stored without your identity. Amana never stores raw IP
           addresses and never shares what one person asked.
         </p>
+        <Link href="/admin" className="underline">
+          Review console
+        </Link>
       </footer>
     </main>
   );

@@ -46,12 +46,20 @@ export interface SynthesizeEvidence {
   content: string;
 }
 
+export interface SynthesizeReferral {
+  name: string;
+  phone: string;
+  description?: string | null;
+  verified: boolean;
+}
+
 export interface SynthesizePromptInput {
   claim: string;
   answerLang: string;
   status: AnswerStatus;
   statusReason: string;
   evidence: SynthesizeEvidence[];
+  referrals: SynthesizeReferral[];
 }
 
 export function buildSynthesizeMessages(
@@ -62,6 +70,8 @@ export function buildSynthesizeMessages(
 You receive the user's claim, a fixed verification status decided by the system, and numbered evidence excerpts. You must never change or contradict the status. Use only the provided evidence: never add facts, names, phone numbers, links, or figures that are not in the evidence.
 
 Write in the user's detected language (${input.answerLang}). Keep sentences short and plain. No jargon and no advice beyond practical next steps.
+
+In next_steps you may mention at most two ACTION CONTACTS, and only when directly relevant to the claim. Never invent phone numbers, links, office names, or fees. If a contact is marked not verified, tell the user to confirm it locally before relying on it.
 
 Return JSON only with exactly these fields:
 {
@@ -81,11 +91,23 @@ Return JSON only with exactly these fields:
           )
           .join("\n\n")}`;
 
+  const referralsBlock =
+    input.referrals.length === 0
+      ? "ACTION CONTACTS: none available."
+      : `ACTION CONTACTS (only these may be mentioned; unverified = tell the user to confirm locally):\n${input.referrals
+          .map(
+            (referral) =>
+              `- ${referral.name} — ${referral.phone}${referral.description ? ` — ${referral.description}` : ""}${referral.verified ? " (verified)" : " (not yet verified)"}`,
+          )
+          .join("\n")}`;
+
   const user = `CLAIM: ${input.claim}
 STATUS: ${input.status}
 STATUS REASON (fixed by the system): ${input.statusReason}
 
-${evidenceBlock}`;
+${evidenceBlock}
+
+${referralsBlock}`;
 
   return [
     { role: "system", content: system },
