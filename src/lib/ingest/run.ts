@@ -10,7 +10,8 @@ import {
 } from "@/lib/db/schema";
 import { chunkText } from "./chunk";
 import { htmlToText } from "./clean";
-import { fetchFeed, type FeedItem } from "./rss";
+import { fetchHtmlItems } from "./html";
+import { fetchFeed } from "./rss";
 import { cleanupExpired } from "@/lib/maintenance";
 
 export interface IngestOptions {
@@ -31,6 +32,13 @@ export interface IngestSummary {
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type SourceRow = typeof sources.$inferSelect;
+
+interface NormalizedItem {
+  title: string;
+  link: string;
+  publishedAt: Date | null;
+  text: string;
+}
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -56,14 +64,13 @@ async function insertChunks(tx: Tx, documentId: string, text: string) {
 
 async function upsertDocument(
   source: SourceRow,
-  item: FeedItem,
-  text: string,
+  item: NormalizedItem,
 ): Promise<"added" | "updated" | "unchanged"> {
   const id = documentIdFor(source.id, item.link);
-  const contentHash = sha256(text);
+  const contentHash = sha256(item.text);
   const now = new Date();
   const title =
-    item.title === "(untitled)" ? text.slice(0, 80).trim() : item.title;
+    item.title === "(untitled)" ? item.text.slice(0, 80).trim() : item.title;
 
   return db.transaction(async (tx) => {
     const existingRows = await tx
@@ -88,7 +95,7 @@ async function upsertDocument(
         sourceId: source.id,
         title,
         url: item.link,
-        content: text,
+        content: item.text,
         language: "en",
         publishedAt: item.publishedAt,
         fetchedAt: now,
@@ -99,7 +106,7 @@ async function upsertDocument(
         contentHash,
         version: 1,
       });
-      await insertChunks(tx, id, text);
+      await insertChunks(tx, id, item.text);
       return "added" as const;
     }
 
@@ -130,16 +137,55 @@ async function upsertDocument(
       .set({
         title,
         url: item.link,
-        content: text,
+        content: item.text,
         publishedAt: item.publishedAt,
         fetchedAt: now,
         contentHash,
         version: existing.version + 1,
       })
       .where(eq(documents.id, id));
-    await insertChunks(tx, id, text);
+    await insertChunks(tx, id, item.text);
     return "updated" as const;
   });
+}
+
+async function fetchSourceItems(
+  source: SourceRow,
+): Promise<{ items: NormalizedItem[]; errors: string[] }> {
+  if (source.fetchKind === "rss") {
+    const rawItems = await fetchFeed(
+      source.url,
+      source.fetchConfig?.timeoutMs ?? 20_000,
+    );
+    if (rawItems.length === 0) {
+      throw new Error(
+        "feed returned no items — likely not RSS (check the URL)",
+      );
+    }
+    return {
+      items: rawItems.map((item) => ({
+        title: item.title,
+        link: item.link,
+        publishedAt: item.publishedAt,
+        text: htmlToText(item.html),
+      })),
+      errors: [],
+    };
+  }
+
+  if (source.fetchKind === "html") {
+    const result = await fetchHtmlItems({
+      id: source.id,
+      url: source.url,
+      fetchConfig: source.fetchConfig ?? {},
+    });
+    if (result.items.length === 0 && result.errors.length === 0) {
+      throw new Error("HTML source returned no items (check the selectors)");
+    }
+    return { items: result.items, errors: result.errors };
+  }
+
+  throw new Error(`Unsupported fetch kind: ${source.fetchKind}`);
 }
 
 export async function ingestSources(
@@ -181,41 +227,30 @@ export async function ingestSources(
     let unchanged = 0;
 
     try {
-      if (source.fetchKind !== "rss") {
-        throw new Error(`Unsupported fetch kind: ${source.fetchKind}`);
-      }
-      const rawItems = await fetchFeed(source.url);
-      if (rawItems.length === 0) {
-        throw new Error(
-          "feed returned no items — likely not RSS (check the URL)",
-        );
-      }
+      const fetched = await fetchSourceItems(source);
+      errors.push(...fetched.errors);
 
-      const cleaned = rawItems.map((item) => ({
-        item,
-        text: htmlToText(item.html),
-      }));
       const keywords = source.includeKeywords.map((keyword) =>
         keyword.toLowerCase(),
       );
       const relevant =
         keywords.length === 0
-          ? cleaned
-          : cleaned.filter(({ item, text }) => {
-              const haystack = `${item.title}\n${text}`.toLowerCase();
+          ? fetched.items
+          : fetched.items.filter((item) => {
+              const haystack = `${item.title}\n${item.text}`.toLowerCase();
               return keywords.some((keyword) => haystack.includes(keyword));
             });
       const limited = options.limitPerSource
         ? relevant.slice(0, options.limitPerSource)
         : relevant;
 
-      for (const { item, text } of limited) {
+      for (const item of limited) {
         try {
-          if (text.length < 120) {
+          if (item.text.length < 120) {
             summary.skipped += 1;
             continue;
           }
-          const result = await upsertDocument(source, item, text);
+          const result = await upsertDocument(source, item);
           if (result === "added") added += 1;
           else if (result === "updated") updated += 1;
           else unchanged += 1;
@@ -224,7 +259,10 @@ export async function ingestSources(
         }
       }
 
-      const productive = added + updated > 0;
+      // A source is productive when a run yields documents, even if they
+      // were already stored; only a fetch that produces nothing counts as
+      // a zero-yield run.
+      const productive = added + updated + unchanged > 0;
       await db
         .update(sources)
         .set({

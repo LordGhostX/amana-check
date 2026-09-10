@@ -41,6 +41,16 @@ The following pathways are valuable but were not publishable during the build be
 - Kenya Ministry of Health public hotline 719 — not confirmed from an official page.
 - Rolling re-verification: check every seeded referral quarterly and update `verifiedAt`, or clear the date so the interface stops presenting it as verified.
 
+## Blocked publishers
+
+These publishers were evaluated and removed from the registry because every non-browser client we use is refused, and the project does not spoof browsers to get around bot protection. Revisit only with publisher permission or an approved API.
+
+- HumAngle (Nigeria) — HTTP 429 to both Bun and curl; only a full browser user agent passes.
+- Africa Check — HTTP 403 to curl and Bun.
+- Nation Media Group (Kenya) — HTTP 403 to curl and Bun.
+- Nigeria Police Force website — HTTP 429 to curl and Bun; its 112 and WhatsApp pathways remain available as seeded referrals.
+- NiMet (Nigeria) — site paths redirect to `/error/404.html`; no working feed or listing.
+
 ## Expansion and operations
 
 - **New geographies.** The region, source, and referral packs are country-scoped. Sahel (Mali, Burkina Faso, Niger), DRC, Mozambique, and Sudan are the natural next packs given OSF's Transformative Peace focus.

@@ -11,12 +11,12 @@ const SOURCE_TIERS = [
   [
     "T1",
     "Official primary",
-    "NCDC, NEMA, INEC, Nigeria Police, Kenya MOH, NDMA, county and state governments",
+    "NCDC, NEMA, Nigeria Police, INEC, Kenya Ministry of Health, National Police Service, NDMA, IEBC, Kenya Met",
   ],
   [
     "T2",
     "Independent verification",
-    "Fact-checkers such as Dubawa, FactCheckHub, PesaCheck, Africa Check; humanitarian sources such as UN OCHA ReliefWeb and The New Humanitarian",
+    "Fact-checkers such as Dubawa, FactCheckHub, PesaCheck; humanitarian sources such as UN OCHA ReliefWeb and The New Humanitarian",
   ],
   [
     "T3",

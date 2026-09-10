@@ -43,6 +43,13 @@
       "when": 1789060948198,
       "tag": "0005_sources_zero_yield",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789062161638,
+      "tag": "0006_sources_fetch_config",
+      "breakpoints": true
     }
   ]
 }

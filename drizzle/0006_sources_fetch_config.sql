@@ -1,0 +1,1 @@
+ALTER TABLE "sources" ADD COLUMN "fetch_config" jsonb DEFAULT '{}'::jsonb NOT NULL;

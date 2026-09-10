@@ -258,6 +258,7 @@ export interface SourceHealthItem {
   country: string;
   type: string;
   tier: number;
+  fetchKind: string;
   enabled: boolean;
   lastSuccessAt: string | null;
   consecutiveFailures: number;
@@ -272,6 +273,7 @@ interface RawSourceHealthRow {
   country: string;
   type: string;
   tier: number;
+  fetch_kind: string;
   enabled: boolean;
   last_success_at: string | Date | null;
   consecutive_failures: number;
@@ -292,6 +294,7 @@ export async function sourceHealth(): Promise<SourceHealthItem[]> {
       s.country,
       s.type,
       s.tier,
+      s.fetch_kind,
       s.enabled,
       s.last_success_at,
       s.consecutive_failures,
@@ -315,6 +318,7 @@ export async function sourceHealth(): Promise<SourceHealthItem[]> {
     country: row.country,
     type: row.type,
     tier: Number(row.tier),
+    fetchKind: row.fetch_kind,
     enabled: row.enabled,
     lastSuccessAt: row.last_success_at
       ? new Date(row.last_success_at).toISOString()

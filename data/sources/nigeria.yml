@@ -1,17 +1,32 @@
 country: NG
 sources:
-  # The /feed path serves HTML, not RSS. Needs the HTML adapter (Phase 2).
   - id: ncdc
     publisher: Nigeria Centre for Disease Control
     type: official
     tier: 1
     scope: [national]
     fetch:
-      kind: rss
-      url: "https://ncdc.gov.ng/feed"
+      kind: html
+      url: "https://ncdc.gov.ng/news/recent"
+      link_pattern: "^/news/\\d+/"
+      max_items: 10
     license: public
     refresh_interval: null
-    enabled: false
+    enabled: true
+
+  - id: ncdc-sitreps
+    publisher: Nigeria Centre for Disease Control
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://ncdc.gov.ng/diseases/sitreps"
+      link_pattern: "^/diseases/sitreps/\\?cat="
+      max_items: 10
+    license: public
+    refresh_interval: null
+    enabled: true
 
   - id: premium-times
     publisher: Premium Times
@@ -49,19 +64,6 @@ sources:
     refresh_interval: null
     enabled: true
 
-  # Blocks identified RSS readers with HTTP 429. Revisit with permission or an alternate feed.
-  - id: humangle
-    publisher: HumAngle
-    type: media
-    tier: 3
-    scope: [national]
-    fetch:
-      kind: rss
-      url: "https://humanglemedia.com/feed/"
-    license: copyrighted
-    refresh_interval: null
-    enabled: false
-
   - id: dubawa
     publisher: Dubawa
     type: factcheck
@@ -82,6 +84,19 @@ sources:
     fetch:
       kind: rss
       url: "https://factcheckhub.com/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  - id: pesacheck-ng
+    publisher: PesaCheck
+    type: factcheck
+    tier: 2
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://medium.com/feed/@pesacheck"
+    include_keywords: [Nigeria]
     license: copyrighted
     refresh_interval: null
     enabled: true
@@ -126,19 +141,6 @@ sources:
     refresh_interval: null
     enabled: true
 
-  # Bot-protected from CI; revisit with a different fetch path.
-  - id: africacheck-ng
-    publisher: Africa Check
-    type: factcheck
-    tier: 2
-    scope: [national, regional]
-    fetch:
-      kind: rss
-      url: "https://africacheck.org/feed"
-    license: copyrighted
-    refresh_interval: null
-    enabled: false
-
   - id: nema-ng
     publisher: National Emergency Management Agency
     type: official
@@ -151,30 +153,6 @@ sources:
     refresh_interval: null
     enabled: true
 
-  - id: nimet-ng
-    publisher: Nigerian Meteorological Agency
-    type: official
-    tier: 1
-    scope: [national]
-    fetch:
-      kind: html
-      url: "https://nimet.gov.ng/"
-    license: public
-    refresh_interval: null
-    enabled: false
-
-  - id: npf-ng
-    publisher: Nigeria Police Force
-    type: official
-    tier: 1
-    scope: [national]
-    fetch:
-      kind: html
-      url: "https://www.npf.gov.ng/"
-    license: public
-    refresh_interval: null
-    enabled: false
-
   - id: inec-ng
     publisher: Independent National Electoral Commission
     type: official
@@ -182,7 +160,9 @@ sources:
     scope: [national]
     fetch:
       kind: html
-      url: "https://inecnigeria.org/"
+      url: "https://inecnigeria.org/press/"
+      link_pattern: "^/press/"
+      max_items: 10
     license: public
     refresh_interval: null
-    enabled: false
+    enabled: true

@@ -12,9 +12,26 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default async function AdminPage() {
-  const cookieStore = await cookies();
+type AdminTab = "queue" | "dashboard" | "sources" | "brief";
+
+const ADMIN_TABS: ReadonlySet<string> = new Set([
+  "queue",
+  "dashboard",
+  "sources",
+  "brief",
+]);
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [cookieStore, params] = await Promise.all([cookies(), searchParams]);
   const authed = isAdminCookie(cookieStore.get(ADMIN_COOKIE)?.value);
+  const requestedTab = typeof params.tab === "string" ? params.tab : "queue";
+  const initialTab = (
+    ADMIN_TABS.has(requestedTab) ? requestedTab : "queue"
+  ) as AdminTab;
 
   if (!authed) {
     return (
@@ -55,6 +72,7 @@ export default async function AdminPage() {
         initialQueue={queue}
         initialDashboard={dashboard}
         sources={sources}
+        initialTab={initialTab}
       />
     </main>
   );

@@ -9,20 +9,21 @@ Amana Check is a retrieval-first verification tool. A language model understands
 ## Ingestion
 
 - Sources live in `data/sources/nigeria.yml` and `data/sources/kenya.yml` with publisher, type, tier, scope, fetch kind, URL, license, and enabled state.
-- `bun run ingest` fetches every enabled source (RSS today), converts HTML to text, chunks the text into roughly 900-character windows with 150-character overlap, and writes documents, chunks, and hashes.
+- `bun run ingest` fetches every enabled source through one of two adapters. The RSS adapter parses feeds and item HTML. The HTML adapter runs in listing mode (follows a configured link pattern or selector, then extracts article text and dates) or snapshot mode (ingests a single page, such as the Kenya Met weather warnings, as one versioned document). Both convert content to text, chunk it into roughly 900-character windows with 150-character overlap, and write documents, chunks, and hashes.
 - Re-ingesting unchanged content only refreshes `fetched_at`. Changed content creates a `document_versions` snapshot and increments the document version, so answers can point at the version of a source that was current when the check ran.
-- Source health is tracked with `last_fetch_at`, `last_success_at`, and `consecutive_failures`, and every run is recorded in `ingestion_runs`.
+- Source health is tracked with `last_fetch_at`, `last_success_at`, `consecutive_failures`, and a `zero_yield_streak` that makes sources which fetch successfully but never produce documents visible in the admin Sources view.
+- Seeding treats the registry files as the source of truth: sources removed from the YAML files are pruned from the database, cascading to any documents they had ingested.
 - The live app never fetches the web. Ingestion is the only component that talks to publishers, which removes SSRF risk from the request path.
 
 A few publishers answer non-browser HTTP clients with bot blocks: ReliefWeb returns 202 empty bodies to Bun and 406 to Node on its country feeds while allowing curl. For those sources the adapter retries once through curl using our honest user agent and a fixed argument array. An approved ReliefWeb API appname is the sanctioned long-term fix, tracked in [future-directions.md](future-directions.md).
 
 ## Source tiers
 
-| Tier | Kind                     | Examples                                                                        |
-| ---- | ------------------------ | ------------------------------------------------------------------------------- |
-| T1   | Official primary         | NCDC, NEMA, INEC, Nigeria Police, Kenya MOH, NDMA, state and county governments |
-| T2   | Independent verification | Dubawa, FactCheckHub, PesaCheck, Africa Check, UN OCHA ReliefWeb                |
-| T3   | Credible media           | Established newsrooms, used as supporting evidence only                         |
+| Tier | Kind                     | Examples                                                                 |
+| ---- | ------------------------ | ------------------------------------------------------------------------ |
+| T1   | Official primary         | NCDC, NEMA, INEC, Nigeria Police, Kenya MOH, NPS, NDMA, IEBC, Kenya Met  |
+| T2   | Independent verification | Dubawa, FactCheckHub, PesaCheck, UN OCHA ReliefWeb, The New Humanitarian |
+| T3   | Credible media           | Established newsrooms, used as supporting evidence only                  |
 
 T1 alone can support a verdict. Contested claims can also reach a verdict with two independent T2 publishers. T3 never decides alone.
 

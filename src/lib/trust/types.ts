@@ -87,3 +87,13 @@ export interface DocumentSnapshot {
   fetchedAt: string;
   sourceId: string;
 }
+
+export interface SourceFetchConfig {
+  listSelector?: string;
+  linkPattern?: string;
+  contentSelector?: string;
+  titleSelector?: string;
+  dateSelector?: string;
+  maxItems?: number;
+  timeoutMs?: number;
+}

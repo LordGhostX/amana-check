@@ -15,6 +15,7 @@ async function main() {
   let sourceTotal = 0;
   let referralTotal = 0;
   const seededSlugs: string[] = [];
+  const seededSourceIds: string[] = [];
 
   for (const slug of SLUGS) {
     const regionFile = loadRegionFile(slug);
@@ -49,6 +50,27 @@ async function main() {
       scope: source.scope,
       fetchKind: source.fetch.kind,
       url: source.fetch.url,
+      fetchConfig: {
+        ...(source.fetch.list_selector
+          ? { listSelector: source.fetch.list_selector }
+          : {}),
+        ...(source.fetch.link_pattern
+          ? { linkPattern: source.fetch.link_pattern }
+          : {}),
+        ...(source.fetch.content_selector
+          ? { contentSelector: source.fetch.content_selector }
+          : {}),
+        ...(source.fetch.title_selector
+          ? { titleSelector: source.fetch.title_selector }
+          : {}),
+        ...(source.fetch.date_selector
+          ? { dateSelector: source.fetch.date_selector }
+          : {}),
+        ...(source.fetch.max_items ? { maxItems: source.fetch.max_items } : {}),
+        ...(source.fetch.timeout_ms
+          ? { timeoutMs: source.fetch.timeout_ms }
+          : {}),
+      },
       license: source.license ?? null,
       refreshInterval: source.refresh_interval ?? null,
       includeKeywords: source.include_keywords ?? [],
@@ -67,6 +89,7 @@ async function main() {
           scope: sql`excluded.scope`,
           fetchKind: sql`excluded.fetch_kind`,
           url: sql`excluded.url`,
+          fetchConfig: sql`excluded.fetch_config`,
           license: sql`excluded.license`,
           refreshInterval: sql`excluded.refresh_interval`,
           includeKeywords: sql`excluded.include_keywords`,
@@ -74,6 +97,7 @@ async function main() {
         },
       });
     sourceTotal += sourceRows.length;
+    seededSourceIds.push(...sourceRows.map((row) => row.id));
 
     const referralFile = loadReferralFile(slug);
     const referralRows = referralFile.referrals.map((referral) => ({
@@ -120,6 +144,18 @@ async function main() {
       .returning({ slug: referrals.slug });
     if (pruned.length > 0) {
       console.log(`Pruned ${pruned.length} referral(s) not in the seed files.`);
+    }
+  }
+
+  if (seededSourceIds.length > 0) {
+    const prunedSources = await db
+      .delete(sources)
+      .where(notInArray(sources.id, seededSourceIds))
+      .returning({ id: sources.id });
+    if (prunedSources.length > 0) {
+      console.log(
+        `Pruned ${prunedSources.length} source(s) no longer in the registries (documents cascade).`,
+      );
     }
   }
 

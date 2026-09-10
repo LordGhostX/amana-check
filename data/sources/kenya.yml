@@ -88,43 +88,18 @@ sources:
     refresh_interval: null
     enabled: true
 
-  # Bot-protected from CI; revisit with a different fetch path.
-  - id: nation-africa
-    publisher: Nation Media Group
-    type: media
-    tier: 3
-    scope: [national]
-    fetch:
-      kind: rss
-      url: "https://nation.africa/kenya/rss"
-    license: copyrighted
-    refresh_interval: null
-    enabled: false
-
-  - id: pesacheck
+  - id: pesacheck-ke
     publisher: PesaCheck
     type: factcheck
     tier: 2
-    scope: [national, regional]
-    fetch:
-      kind: rss
-      url: "https://pesacheck.org/feed"
-    license: copyrighted
-    refresh_interval: null
-    enabled: false
-
-  # Official primaries pending the HTML adapter (Phase 2).
-  - id: moh-ke
-    publisher: Ministry of Health Kenya
-    type: official
-    tier: 1
     scope: [national]
     fetch:
-      kind: html
-      url: "https://www.health.go.ke/"
-    license: public
+      kind: rss
+      url: "https://medium.com/feed/@pesacheck"
+    include_keywords: [Kenya]
+    license: copyrighted
     refresh_interval: null
-    enabled: false
+    enabled: true
 
   - id: ndma-ke
     publisher: National Drought Management Authority
@@ -132,11 +107,36 @@ sources:
     tier: 1
     scope: [national]
     fetch:
-      kind: html
-      url: "https://www.ndma.go.ke/"
+      kind: rss
+      url: "https://www.ndma.go.ke/feed"
     license: public
     refresh_interval: null
-    enabled: false
+    enabled: true
+
+  - id: moh-ke
+    publisher: Ministry of Health Kenya
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://www.health.go.ke/rss.xml"
+      timeout_ms: 45000
+    license: public
+    refresh_interval: null
+    enabled: true
+
+  - id: nps-ke
+    publisher: National Police Service Kenya
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://nationalpolice.go.ke/rss.xml"
+    license: public
+    refresh_interval: null
+    enabled: true
 
   - id: met-ke
     publisher: Kenya Meteorological Department
@@ -145,22 +145,11 @@ sources:
     scope: [national]
     fetch:
       kind: html
-      url: "https://meteo.go.ke/"
+      url: "https://meteo.go.ke/weather-warnings/"
+      content_selector: "main"
     license: public
     refresh_interval: null
-    enabled: false
-
-  - id: nps-ke
-    publisher: National Police Service Kenya
-    type: official
-    tier: 1
-    scope: [national]
-    fetch:
-      kind: html
-      url: "https://www.nationalpolice.go.ke/"
-    license: public
-    refresh_interval: null
-    enabled: false
+    enabled: true
 
   - id: iebc-ke
     publisher: Independent Electoral and Boundaries Commission
@@ -169,7 +158,9 @@ sources:
     scope: [national]
     fetch:
       kind: html
-      url: "https://www.iebc.or.ke/"
+      url: "https://www.iebc.or.ke/news/"
+      link_pattern: "\\?IEBC_"
+      max_items: 10
     license: public
     refresh_interval: null
-    enabled: false
+    enabled: true

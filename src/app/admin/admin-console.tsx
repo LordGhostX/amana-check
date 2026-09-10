@@ -15,12 +15,14 @@ export function AdminConsole({
   initialQueue,
   initialDashboard,
   sources,
+  initialTab = "queue",
 }: {
   initialQueue: ReviewQueueItem[];
   initialDashboard: DashboardData;
   sources: SourceHealthItem[];
+  initialTab?: Tab;
 }) {
-  const [tab, setTab] = useState<Tab>("queue");
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -146,6 +148,7 @@ export function AdminConsole({
                   <th className="py-2 pr-3 font-medium">Source</th>
                   <th className="py-2 pr-3 font-medium">Country</th>
                   <th className="py-2 pr-3 font-medium">Type</th>
+                  <th className="py-2 pr-3 font-medium">Fetch</th>
                   <th className="py-2 pr-3 font-medium">Enabled</th>
                   <th className="py-2 pr-3 font-medium">Last success</th>
                   <th className="py-2 pr-3 font-medium">Failures</th>
@@ -169,6 +172,7 @@ export function AdminConsole({
                     <td className="py-2 pr-3 whitespace-nowrap">
                       T{source.tier} {source.type}
                     </td>
+                    <td className="py-2 pr-3">{source.fetchKind}</td>
                     <td className="py-2 pr-3">
                       {source.enabled ? "yes" : "no"}
                     </td>

@@ -20,6 +20,7 @@ import type {
   DocumentSnapshot,
   FetchKind,
   Sensitivity,
+  SourceFetchConfig,
   SourceType,
 } from "@/lib/trust/types";
 
@@ -51,6 +52,10 @@ export const sources = pgTable(
     scope: jsonb("scope").$type<string[]>().notNull().default(["national"]),
     fetchKind: text("fetch_kind").$type<FetchKind>().notNull(),
     url: text("url").notNull(),
+    fetchConfig: jsonb("fetch_config")
+      .$type<SourceFetchConfig>()
+      .notNull()
+      .default({}),
     license: text("license"),
     refreshInterval: text("refresh_interval"),
     includeKeywords: jsonb("include_keywords")

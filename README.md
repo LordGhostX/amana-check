@@ -69,7 +69,7 @@ Ingestion falls back to `curl` for feeds that bot-block other HTTP clients (Reli
 src/app/                  UI, answer card, admin console, API routes
 src/lib/admin/            Signed sessions, review queue, dashboard, brief export
 src/lib/db/               Drizzle schema + client
-src/lib/ingest/           RSS adapter, cleaning, chunking, upserts
+src/lib/ingest/           RSS and HTML adapters, cleaning, chunking, upserts
 src/lib/llm/              Fail-closed OpenRouter client, prompts, budget
 src/lib/locale/           HMAC IP hashing, geo headers, location precedence
 src/lib/pipeline/         Extraction, synthesis, orchestration, events

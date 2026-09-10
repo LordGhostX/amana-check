@@ -23,6 +23,7 @@
     "check:pipeline": "bun run scripts/check-pipeline.ts"
   },
   "dependencies": {
+    "cheerio": "^1.2.0",
     "drizzle-orm": "^0.45.2",
     "fast-xml-parser": "^5.11.1",
     "html-to-text": "^10.0.1",
