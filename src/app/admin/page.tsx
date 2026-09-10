@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, isAdminCookie } from "@/lib/admin/auth";
-import { dashboardData, listReviewQueue } from "@/lib/admin/data";
+import { dashboardData, listReviewQueue, sourceHealth } from "@/lib/admin/data";
 import { AdminConsole } from "./admin-console";
 import { AdminLogin } from "./admin-login";
 
@@ -33,9 +33,10 @@ export default async function AdminPage() {
     );
   }
 
-  const [queue, dashboard] = await Promise.all([
+  const [queue, dashboard, sources] = await Promise.all([
     listReviewQueue(),
     dashboardData(7),
+    sourceHealth(),
   ]);
 
   return (
@@ -50,7 +51,11 @@ export default async function AdminPage() {
           happening.
         </p>
       </header>
-      <AdminConsole initialQueue={queue} initialDashboard={dashboard} />
+      <AdminConsole
+        initialQueue={queue}
+        initialDashboard={dashboard}
+        sources={sources}
+      />
     </main>
   );
 }

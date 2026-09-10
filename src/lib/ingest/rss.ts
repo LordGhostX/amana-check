@@ -1,4 +1,7 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { XMLParser } from "fast-xml-parser";
+import { optionalEnv } from "@/lib/env";
 
 export interface FeedItem {
   title: string;
@@ -6,6 +9,13 @@ export interface FeedItem {
   publishedAt: Date | null;
   html: string;
 }
+
+const execFileAsync = promisify(execFile);
+
+const USER_AGENT =
+  "AmanaCheck/0.1 (+https://amana-check.vercel.app; ingestion)";
+const ACCEPT =
+  "application/rss+xml, application/atom+xml, application/xml, text/xml, */*";
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -82,6 +92,50 @@ export function parseFeed(xml: string): FeedItem[] {
   return items;
 }
 
+/**
+ * ReliefWeb and some other publishers answer non-browser HTTP clients with
+ * `202` empty bodies or `406` bot-block pages while allowing curl. We keep
+ * the honest AmanaCheck user agent and retry once through curl (fixed
+ * argument array, no shell) before treating the source as failed.
+ */
+function isBotBlock(status: number, body: string): boolean {
+  if (status === 202 || status === 406) return true;
+  return /blocked due to bot activity/i.test(body);
+}
+
+async function fetchXmlWithCurl(
+  url: string,
+  timeoutMs: number,
+): Promise<string> {
+  if (optionalEnv("INGEST_CURL_FALLBACK") === "0") {
+    throw new Error("curl fallback is disabled by INGEST_CURL_FALLBACK");
+  }
+  try {
+    const { stdout } = await execFileAsync(
+      "curl",
+      [
+        "-sSL",
+        "--max-time",
+        String(Math.ceil(timeoutMs / 1000)),
+        "-A",
+        USER_AGENT,
+        "-H",
+        `Accept: ${ACCEPT}`,
+        url,
+      ],
+      { maxBuffer: 8 * 1024 * 1024, timeout: timeoutMs + 5000 },
+    );
+    if (!stdout.trim()) {
+      throw new Error("curl returned an empty body");
+    }
+    return stdout;
+  } catch (error) {
+    throw new Error(
+      `curl fallback failed (${error instanceof Error ? error.message : String(error)}). Install curl or set INGEST_CURL_FALLBACK=0 to fail fast.`,
+    );
+  }
+}
+
 export async function fetchFeed(
   url: string,
   timeoutMs = 20_000,
@@ -91,18 +145,18 @@ export async function fetchFeed(
   try {
     const response = await fetch(url, {
       signal: controller.signal,
-      headers: {
-        "User-Agent":
-          "AmanaCheck/0.1 (+https://amana-check.vercel.app; ingestion)",
-        Accept:
-          "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
-      },
+      headers: { "User-Agent": USER_AGENT, Accept: ACCEPT },
     });
+    const body = await response.text().catch(() => "");
+
+    if (isBotBlock(response.status, body)) {
+      const xml = await fetchXmlWithCurl(url, timeoutMs);
+      return parseFeed(xml);
+    }
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    const xml = await response.text();
-    return parseFeed(xml);
+    return parseFeed(body);
   } finally {
     clearTimeout(timer);
   }

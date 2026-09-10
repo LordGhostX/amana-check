@@ -19,7 +19,9 @@ These are deliberately out of the proof-of-concept scope, with enough design det
 ## Coverage and data
 
 - **Scheduled ingestion.** Per-source `refresh_interval` fields already exist in the registry but no scheduler is wired. GitHub Actions cron or an always-on worker can refresh priority feeds every 15 minutes, the rest hourly, and PDFs daily. The freshness gate already refuses verdicts when runs fail, so scheduling only improves coverage.
-- **HTML and PDF adapters.** Several official primaries (NCDC news, Nigeria Police, ministry sites) publish HTML rather than RSS. An HTML listing adapter and a PDF adapter would unlock them; ReliefWeb country feeds need a browser-compatible fetch path.
+- **HTML and PDF adapters.** Several official primaries (NCDC news, Nigeria Police, ministry sites) publish HTML rather than RSS. An HTML listing adapter and a PDF adapter would unlock them.
+- **Approved ReliefWeb appname.** Request an appname at apidoc.reliefweb.int, then implement the `api` fetch kind with country filters and retire the curl fallback that country feeds currently require.
+- **Bot-friendly humanitarian feeds.** The New Humanitarian is wired in with country keyword filters, but bot-blocked sources such as PesaCheck and IPC still leave the independent-verification tier thinner than it should be, especially in Kenya.
 - **Semantic retrieval.** Postgres full-text search is deterministic and inspectable. Adding `pgvector` with a multilingual embedding model would improve recall on paraphrases while keeping the same evidence gate and citation rules.
 - **More official sources.** Kenya MOH, Kenya Met, NDMA, and Nigeria's NEMA/state emergency agencies would deepen T1 coverage beyond today's RSS subset.
 

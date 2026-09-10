@@ -2,17 +2,23 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { DashboardData, ReviewQueueItem } from "@/lib/admin/data";
+import type {
+  DashboardData,
+  ReviewQueueItem,
+  SourceHealthItem,
+} from "@/lib/admin/data";
 import { ANSWER_STATUSES, type AnswerStatus } from "@/lib/trust/types";
 
-type Tab = "queue" | "dashboard" | "brief";
+type Tab = "queue" | "dashboard" | "sources" | "brief";
 
 export function AdminConsole({
   initialQueue,
   initialDashboard,
+  sources,
 }: {
   initialQueue: ReviewQueueItem[];
   initialDashboard: DashboardData;
+  sources: SourceHealthItem[];
 }) {
   const [tab, setTab] = useState<Tab>("queue");
 
@@ -28,6 +34,7 @@ export function AdminConsole({
           [
             ["queue", "Review queue"],
             ["dashboard", "Demand dashboard"],
+            ["sources", "Sources"],
             ["brief", "Brief export"],
           ] as const
         ).map(([value, label]) => (
@@ -123,6 +130,73 @@ export function AdminConsole({
               </table>
             </div>
           )}
+        </div>
+      ) : null}
+
+      {tab === "sources" ? (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Ingestion health by source. A source can succeed at the HTTP level
+            yet yield nothing; the zero-yield streak makes that visible.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b border-zinc-300 dark:border-zinc-700">
+                  <th className="py-2 pr-3 font-medium">Source</th>
+                  <th className="py-2 pr-3 font-medium">Country</th>
+                  <th className="py-2 pr-3 font-medium">Type</th>
+                  <th className="py-2 pr-3 font-medium">Enabled</th>
+                  <th className="py-2 pr-3 font-medium">Last success</th>
+                  <th className="py-2 pr-3 font-medium">Failures</th>
+                  <th className="py-2 pr-3 font-medium">Zero-yield streak</th>
+                  <th className="py-2 font-medium">Last run</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sources.map((source) => (
+                  <tr
+                    key={source.id}
+                    className="border-b border-zinc-200 align-top dark:border-zinc-800"
+                  >
+                    <td className="py-2 pr-3">
+                      <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                        {source.publisher}
+                      </p>
+                      <p className="text-xs text-zinc-500">{source.id}</p>
+                    </td>
+                    <td className="py-2 pr-3">{source.country}</td>
+                    <td className="py-2 pr-3 whitespace-nowrap">
+                      T{source.tier} {source.type}
+                    </td>
+                    <td className="py-2 pr-3">
+                      {source.enabled ? "yes" : "no"}
+                    </td>
+                    <td className="py-2 pr-3 whitespace-nowrap text-zinc-500">
+                      {source.lastSuccessAt
+                        ? new Date(source.lastSuccessAt).toLocaleString()
+                        : "never"}
+                    </td>
+                    <td
+                      className={`py-2 pr-3 ${source.consecutiveFailures > 0 ? "font-medium text-red-700 dark:text-red-400" : ""}`}
+                    >
+                      {source.consecutiveFailures}
+                    </td>
+                    <td
+                      className={`py-2 pr-3 ${source.zeroYieldStreak >= 3 ? "font-medium text-amber-700 dark:text-amber-400" : ""}`}
+                    >
+                      {source.zeroYieldStreak}
+                    </td>
+                    <td className="py-2 text-zinc-500">
+                      {source.lastRunAdded == null
+                        ? "no runs"
+                        : `+${source.lastRunAdded} new, ${source.lastRunUpdated ?? 0} updated`}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : null}
 

@@ -251,3 +251,79 @@ export function briefToCsv(rows: DemandBucket[]): string {
   );
   return [header, ...lines].join("\n");
 }
+
+export interface SourceHealthItem {
+  id: string;
+  publisher: string;
+  country: string;
+  type: string;
+  tier: number;
+  enabled: boolean;
+  lastSuccessAt: string | null;
+  consecutiveFailures: number;
+  zeroYieldStreak: number;
+  lastRunAdded: number | null;
+  lastRunUpdated: number | null;
+}
+
+interface RawSourceHealthRow {
+  id: string;
+  publisher: string;
+  country: string;
+  type: string;
+  tier: number;
+  enabled: boolean;
+  last_success_at: string | Date | null;
+  consecutive_failures: number;
+  zero_yield_streak: number;
+  last_run_added: number | null;
+  last_run_updated: number | null;
+}
+
+/**
+ * Green "last success" can hide a source that fetches fine but never yields
+ * documents, so the zero-yield streak is surfaced alongside it.
+ */
+export async function sourceHealth(): Promise<SourceHealthItem[]> {
+  const rows = await db.execute(sql`
+    SELECT
+      s.id,
+      s.publisher,
+      s.country,
+      s.type,
+      s.tier,
+      s.enabled,
+      s.last_success_at,
+      s.consecutive_failures,
+      s.zero_yield_streak,
+      r.documents_added AS last_run_added,
+      r.documents_updated AS last_run_updated
+    FROM sources s
+    LEFT JOIN LATERAL (
+      SELECT documents_added, documents_updated
+      FROM ingestion_runs
+      WHERE source_id = s.id
+      ORDER BY started_at DESC
+      LIMIT 1
+    ) r ON true
+    ORDER BY s.enabled DESC, s.country, s.id
+  `);
+
+  return (rows as unknown as RawSourceHealthRow[]).map((row) => ({
+    id: row.id,
+    publisher: row.publisher,
+    country: row.country,
+    type: row.type,
+    tier: Number(row.tier),
+    enabled: row.enabled,
+    lastSuccessAt: row.last_success_at
+      ? new Date(row.last_success_at).toISOString()
+      : null,
+    consecutiveFailures: Number(row.consecutive_failures),
+    zeroYieldStreak: Number(row.zero_yield_streak),
+    lastRunAdded:
+      row.last_run_added == null ? null : Number(row.last_run_added),
+    lastRunUpdated:
+      row.last_run_updated == null ? null : Number(row.last_run_updated),
+  }));
+}

@@ -8,6 +8,7 @@ This threat model covers the people who use Amana Check, the communities it repo
 - Inputs: message text in any language (typed or pasted). No accounts, no uploads, no location sharing.
 - Data: a curated source corpus; de-identified checks; aggregate verification-demand buckets; isolated HMAC keyed rate-limit and locale-hint rows.
 - Model calls go to OpenRouter with hardcoded zero-retention and no-training routing; the request fails closed if no compliant endpoint exists.
+- Ingestion fetches only URLs from the curated registry. The curl fallback for bot-blocked feeds uses a fixed argument array, never a shell, so no user input can reach a command.
 
 ## Assets
 

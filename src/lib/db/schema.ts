@@ -61,6 +61,7 @@ export const sources = pgTable(
     lastFetchAt: timestamp("last_fetch_at", { withTimezone: true }),
     lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
     consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+    zeroYieldStreak: integer("zero_yield_streak").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

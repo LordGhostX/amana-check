@@ -60,8 +60,9 @@ sources:
     refresh_interval: null
     enabled: true
 
-  # Country-filtered ReliefWeb feeds return HTTP 202 with an empty body to non-browser clients.
-  # The global feed is used instead, filtered by country keywords at ingestion.
+  # ReliefWeb answers Bun/Node with 202 or 406 on country feeds; the ingestion
+  # adapter retries through curl with our honest user agent. The sanctioned fix
+  # is an approved ReliefWeb API appname (see docs/future-directions.md).
   - id: reliefweb-ken
     publisher: ReliefWeb (UN OCHA)
     type: humanitarian
@@ -69,9 +70,21 @@ sources:
     scope: [national]
     fetch:
       kind: rss
-      url: "https://reliefweb.int/updates/rss.xml"
-    include_keywords: [Kenya]
+      url: "https://reliefweb.int/country/ken/rss.xml"
     license: open
+    refresh_interval: null
+    enabled: true
+
+  - id: the-new-humanitarian-ke
+    publisher: The New Humanitarian
+    type: humanitarian
+    tier: 2
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://www.thenewhumanitarian.org/rss.xml"
+    include_keywords: [Kenya]
+    license: copyrighted
     refresh_interval: null
     enabled: true
 

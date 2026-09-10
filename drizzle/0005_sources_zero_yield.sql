@@ -1,0 +1,1 @@
+ALTER TABLE "sources" ADD COLUMN "zero_yield_streak" integer DEFAULT 0 NOT NULL;

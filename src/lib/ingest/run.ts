@@ -224,12 +224,14 @@ export async function ingestSources(
         }
       }
 
+      const productive = added + updated > 0;
       await db
         .update(sources)
         .set({
           lastFetchAt: startedAt,
           lastSuccessAt: new Date(),
           consecutiveFailures: 0,
+          zeroYieldStreak: productive ? 0 : sql`${sources.zeroYieldStreak} + 1`,
         })
         .where(eq(sources.id, source.id));
       await db.insert(ingestionRuns).values({

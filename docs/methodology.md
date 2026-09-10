@@ -14,6 +14,8 @@ Amana Check is a retrieval-first verification tool. A language model understands
 - Source health is tracked with `last_fetch_at`, `last_success_at`, and `consecutive_failures`, and every run is recorded in `ingestion_runs`.
 - The live app never fetches the web. Ingestion is the only component that talks to publishers, which removes SSRF risk from the request path.
 
+A few publishers answer non-browser HTTP clients with bot blocks: ReliefWeb returns 202 empty bodies to Bun and 406 to Node on its country feeds while allowing curl. For those sources the adapter retries once through curl using our honest user agent and a fixed argument array. An approved ReliefWeb API appname is the sanctioned long-term fix, tracked in [future-directions.md](future-directions.md).
+
 ## Source tiers
 
 | Tier | Kind                     | Examples                                                                        |

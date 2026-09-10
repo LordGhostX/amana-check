@@ -32,6 +32,8 @@ bun run dev
 
 Generate `IP_HASH_SECRET` with `openssl rand -hex 32`.
 
+Ingestion falls back to `curl` for feeds that bot-block other HTTP clients (ReliefWeb country feeds). curl ships with macOS and GitHub's Ubuntu runners; set `INGEST_CURL_FALLBACK=0` to disable the fallback and fail fast instead.
+
 ## Scripts
 
 | Command                  | What it does                                                                      |

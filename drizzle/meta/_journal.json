@@ -36,6 +36,13 @@
       "when": 1789060163070,
       "tag": "0004_referral_slug",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789060948198,
+      "tag": "0005_sources_zero_yield",
+      "breakpoints": true
     }
   ]
 }
