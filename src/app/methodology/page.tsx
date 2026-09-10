@@ -16,7 +16,7 @@ const SOURCE_TIERS = [
   [
     "T2",
     "Independent verification",
-    "Fact-checkers such as Dubawa, FactCheckHub, PesaCheck, Africa Check; humanitarian sources such as UN OCHA ReliefWeb",
+    "Fact-checkers such as Dubawa, FactCheckHub, PesaCheck, Africa Check; humanitarian sources such as UN OCHA ReliefWeb and The New Humanitarian",
   ],
   [
     "T3",

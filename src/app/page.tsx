@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { count } from "drizzle-orm";
+import { count, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { regions, sources } from "@/lib/db/schema";
 import { CheckForm } from "./check-form";
@@ -9,10 +9,19 @@ export const dynamic = "force-dynamic";
 async function loadRegistryCounts() {
   try {
     const [regionRow] = await db.select({ value: count() }).from(regions);
-    const [sourceRow] = await db.select({ value: count() }).from(sources);
+    const [sourceRow] = await db
+      .select({
+        total: count(),
+        enabled:
+          sql<number>`count(*) filter (where ${sources.enabled})`.mapWith(
+            Number,
+          ),
+      })
+      .from(sources);
     return {
       regions: regionRow?.value ?? 0,
-      sources: sourceRow?.value ?? 0,
+      sources: sourceRow?.total ?? 0,
+      sourcesEnabled: sourceRow?.enabled ?? 0,
     };
   } catch {
     return null;
@@ -71,6 +80,9 @@ export default async function Home() {
         {counts ? (
           <p>
             {counts.regions} regions and {counts.sources} sources registered
+            {counts.sourcesEnabled < counts.sources
+              ? ` (${counts.sourcesEnabled} active)`
+              : ""}{" "}
             across Nigeria and Kenya.
           </p>
         ) : null}
