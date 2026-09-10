@@ -118,7 +118,7 @@ export default async function Home() {
           </p>
           <h2 className="balance mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-ink sm:text-4xl">
             Every answer starts with dated evidence. If the sources cannot
-            support a verdict, Amana says &quot;unknown.&quot;
+            support a verdict, Amana says &quot;unknown&quot;
           </h2>
           <Link
             href="/methodology"

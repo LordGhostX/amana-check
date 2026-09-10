@@ -90,7 +90,7 @@ Evidence selection and the status decision stay deterministic. The model only ph
 
 - `bun run eval` runs the Nigeria and Kenya claim sets through the full pipeline and writes `eval/results/latest.json`.
 - Metrics are claim-type accuracy, language detection accuracy, evidence coverage, citation coverage, status distribution, and cost.
-- Run of 2026-09-10: 14 of 14 claims passed, claim type 13 of 13, language detection 7 of 7, citation coverage 4 of 4 applicable answers, $0.0296.
+- Run of 2026-09-11: 14 of 14 claims passed, claim type 13 of 13, language detection 7 of 7, evidence coverage 1 of 1 applicable expectation, citation coverage 4 of 4 applicable answers, no errors, $0.032018.
 
 ## Cost and abuse controls
 

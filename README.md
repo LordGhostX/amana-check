@@ -10,13 +10,17 @@ Built for the OSF × Andela hackathon "Information you can trust". Primary track
 
 The proof of concept works end to end. The corpus, trust engine, citizen experience, accountability loop, and hardening phases are complete. Submission artifacts remain.
 
-- Eval, 2026-09-10: 14 of 14 claims pass, claim type 13 of 13, language detection 7 of 7, citation coverage 4 of 4 applicable answers, $0.0296 for the full run.
+- Eval, 2026-09-11: 14 of 14 claims pass, claim type 13 of 13, language detection 7 of 7, evidence coverage 1 of 1 applicable expectation, citation coverage 4 of 4 applicable answers, no errors, $0.032018 for the full run.
 - Red-team: 11 checks pass, including live prompt injection, forged citations, and oversized input.
 - Corpus: 26 enabled sources, 13 for Nigeria and 13 for Kenya, holding 273 documents.
 
 The model never receives the corpus. Retrieval shortlists 24 chunks and sends at most 8 excerpts, each capped at 700 characters; [docs/methodology.md](docs/methodology.md) explains the pipeline and its context budget.
 
 See [docs/PLAN.md](docs/PLAN.md) for the frozen plan and [docs/constraints-matrix.md](docs/constraints-matrix.md) for the hackathon constraints mapped to code.
+
+## License
+
+Amana Check is released under the [MIT License](LICENSE).
 
 ## Stack
 
