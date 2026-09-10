@@ -1,0 +1,140 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { geoFromHeaders } from "@/lib/locale/geo";
+import { hashIp, ipFromHeaders } from "@/lib/locale/hash";
+import {
+  LOCALE_HINT_MIN_CONFIDENCE,
+  readLocaleHint,
+  writeLocaleHint,
+} from "@/lib/locale/hints";
+import { fallbackFromRequest } from "@/lib/locale/precedence";
+import { RATE_LIMITS, checkRateLimit } from "@/lib/locale/rate-limit";
+import { answerClaim } from "@/lib/pipeline/answer";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const bodySchema = z.object({
+  text: z.string().trim().min(3).max(4000),
+  country: z.enum(["NG", "KE"]).optional(),
+  regionCode: z.string().trim().min(2).max(10).optional(),
+});
+
+function clientIpHash(request: NextRequest): string | null {
+  const ip = ipFromHeaders(request.headers);
+  if (!ip) return null;
+  try {
+    return hashIp(ip);
+  } catch {
+    return null;
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const ipHash = clientIpHash(request);
+
+  if (ipHash) {
+    const limit = await checkRateLimit(ipHash, RATE_LIMITS.ask);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "rate_limited", resetAt: limit.resetAt.toISOString() },
+        { status: 429 },
+      );
+    }
+  }
+
+  const body = await request.json().catch(() => null);
+  const parsed = bodySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "invalid_request",
+        issues: parsed.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      },
+      { status: 400 },
+    );
+  }
+
+  const geo = geoFromHeaders(request.headers);
+  const fallback = fallbackFromRequest({
+    requestedCountry: parsed.data.country,
+    requestedRegionCode: parsed.data.regionCode,
+    cookieRegionCode: request.cookies.get("amana_region")?.value,
+    geoCountry: geo.country,
+    geoRegionCode: geo.regionCode,
+  });
+
+  const hintLang = ipHash ? await readLocaleHint(ipHash) : null;
+  const preferredLang =
+    request.cookies.get("amana_lang")?.value ?? hintLang ?? "en";
+
+  try {
+    const result = await answerClaim({
+      text: parsed.data.text,
+      fallbackCountry: fallback.country,
+      fallbackRegionCode: fallback.regionCode,
+      fallbackSource: fallback.source,
+    });
+
+    if (
+      ipHash &&
+      result.extraction.language_confidence >= LOCALE_HINT_MIN_CONFIDENCE
+    ) {
+      await writeLocaleHint(
+        ipHash,
+        result.extraction.detected_lang,
+        Math.round(result.extraction.language_confidence),
+      );
+    }
+
+    const response = NextResponse.json({
+      answerId: result.answerId,
+      claimHash: result.claimHash,
+      version: result.version,
+      cached: result.cached,
+      payload: result.payload,
+      location: result.location,
+      extraction: {
+        detectedLang: result.extraction.detected_lang,
+        languageConfidence: result.extraction.language_confidence,
+        claimType: result.extraction.claim_type,
+        sensitivity: result.extraction.sensitivity,
+        locationHints: result.extraction.location_hints,
+      },
+      versions: result.versions,
+      preferredLang,
+    });
+
+    const cookieOptions = {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: "lax" as const,
+    };
+    if (result.location.regionCode) {
+      response.cookies.set(
+        "amana_region",
+        result.location.regionCode,
+        cookieOptions,
+      );
+    }
+    response.cookies.set(
+      "amana_lang",
+      result.extraction.detected_lang,
+      cookieOptions,
+    );
+
+    return response;
+  } catch (error) {
+    console.error("ask failed", error);
+    return NextResponse.json(
+      {
+        error: "answer_failed",
+        message: "Amana could not complete this check. Please try again.",
+      },
+      { status: 500 },
+    );
+  }
+}

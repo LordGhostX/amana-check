@@ -85,7 +85,7 @@ async function runFile(file: EvalFile): Promise<ClaimResult[]> {
     try {
       const result = await answerClaim({
         text: claim.text,
-        country: file.country,
+        fallbackCountry: file.country,
         bypassCache: true,
       });
       const failures = evaluate(claim, result);

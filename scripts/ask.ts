@@ -20,7 +20,11 @@ async function main() {
     throw new Error('Usage: bun run ask "claim text" [--ng|--ke] [--fresh]');
   }
 
-  const result = await answerClaim({ text, country, bypassCache: fresh });
+  const result = await answerClaim({
+    text,
+    fallbackCountry: country,
+    bypassCache: fresh,
+  });
   console.log(
     JSON.stringify(
       {

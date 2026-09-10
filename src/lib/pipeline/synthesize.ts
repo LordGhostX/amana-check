@@ -18,6 +18,7 @@ export interface SynthesizeInput {
   evidence: RetrievedChunk[];
   country?: string;
   regionCode?: string;
+  locationLabel?: string;
 }
 
 const CITATION_RE = /\[S(\d+)\]/g;
@@ -87,13 +88,15 @@ function toEvidenceItem(chunk: RetrievedChunk): EvidenceItem {
 }
 
 function locationOf(input: SynthesizeInput) {
-  if (input.extraction.location_hints.length === 0 && !input.country) {
+  const label =
+    input.locationLabel ?? input.extraction.location_hints.join(", ");
+  if (!label && !input.country) {
     return null;
   }
   return {
     country: input.country,
     regionCode: input.regionCode,
-    label: input.extraction.location_hints.join(", ") || input.country,
+    label: label || input.country,
   };
 }
 

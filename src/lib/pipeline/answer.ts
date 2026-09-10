@@ -1,12 +1,17 @@
 import { createHash } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { answerVersions, answers, claims } from "@/lib/db/schema";
 import { PROMPT_VERSIONS } from "@/lib/llm/prompts";
+import {
+  resolveLocation,
+  type LocationSource,
+  type ResolvedLocation,
+} from "@/lib/locale/precedence";
 import { corpusNewest } from "@/lib/retrieval/corpus";
 import { searchEvidence, type RetrievedChunk } from "@/lib/retrieval/search";
 import { assessEvidence, type EvidenceAssessment } from "@/lib/trust/freshness";
-import type { AnswerPayload } from "@/lib/trust/types";
+import type { AnswerPayload, AnswerStatus } from "@/lib/trust/types";
 import { clusterKeyFor, recordVerificationDemand } from "./events";
 import { extractClaim } from "./extract";
 import type { Extraction } from "./schemas";
@@ -14,9 +19,17 @@ import { synthesizeAnswer } from "./synthesize";
 
 export interface AskOptions {
   text: string;
-  country?: string;
-  regionCode?: string;
+  fallbackCountry?: string;
+  fallbackRegionCode?: string;
+  fallbackSource?: LocationSource;
   bypassCache?: boolean;
+}
+
+export interface AnswerVersionInfo {
+  version: number;
+  status: AnswerStatus;
+  changedAt: string;
+  changeReason: string | null;
 }
 
 export interface AskResult {
@@ -28,6 +41,8 @@ export interface AskResult {
   extraction: Extraction;
   evidence: RetrievedChunk[];
   assessment: EvidenceAssessment;
+  location: ResolvedLocation;
+  versions: AnswerVersionInfo[];
 }
 
 export function claimHashFor(extraction: Extraction, country?: string): string {
@@ -40,6 +55,27 @@ export function claimHashFor(extraction: Extraction, country?: string): string {
     .digest("hex");
 }
 
+async function loadVersions(answerId: number): Promise<AnswerVersionInfo[]> {
+  const rows = await db
+    .select({
+      version: answerVersions.version,
+      status: answerVersions.status,
+      changedAt: answerVersions.createdAt,
+      changeReason: answerVersions.changeReason,
+    })
+    .from(answerVersions)
+    .where(eq(answerVersions.answerId, answerId))
+    .orderBy(desc(answerVersions.version))
+    .limit(10);
+
+  return rows.map((row) => ({
+    version: row.version,
+    status: row.status,
+    changedAt: row.changedAt.toISOString(),
+    changeReason: row.changeReason,
+  }));
+}
+
 function cachedAssessment(payload: AnswerPayload): EvidenceAssessment {
   return {
     status: payload.status,
@@ -50,9 +86,19 @@ function cachedAssessment(payload: AnswerPayload): EvidenceAssessment {
   };
 }
 
+function cachedLocation(payload: AnswerPayload): ResolvedLocation {
+  if (!payload.location) return { source: "cache" };
+  return {
+    country: payload.location.country,
+    regionCode: payload.location.regionCode,
+    regionName: payload.location.label,
+    source: "cache",
+  };
+}
+
 export async function answerClaim(options: AskOptions): Promise<AskResult> {
   const extraction = await extractClaim(options.text);
-  const claimHash = claimHashFor(extraction, options.country);
+  const claimHash = claimHashFor(extraction, options.fallbackCountry);
   const lang = extraction.detected_lang;
 
   if (!options.bypassCache) {
@@ -72,17 +118,28 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
         extraction,
         evidence: [],
         assessment: cachedAssessment(cached.payload),
+        location: cachedLocation(cached.payload),
+        versions: await loadVersions(cached.id),
       };
     }
   }
 
+  const location = await resolveLocation({
+    claimLocationHints: extraction.location_hints,
+    fallback: {
+      country: options.fallbackCountry,
+      regionCode: options.fallbackRegionCode,
+      source: options.fallbackSource ?? "request",
+    },
+  });
+
   const evidence = await searchEvidence({
     query: [extraction.english_query, ...extraction.keywords].join(" "),
-    country: options.country,
-    regionLabel: extraction.location_hints[0],
+    country: location.country,
+    regionLabel: location.regionName ?? extraction.location_hints[0],
     limit: 8,
   });
-  const newest = await corpusNewest(options.country);
+  const newest = await corpusNewest(location.country);
   const assessment = assessEvidence(
     extraction.claim_type,
     evidence.map((item) => ({
@@ -99,8 +156,9 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     extraction,
     assessment,
     evidence,
-    country: options.country,
-    regionCode: options.regionCode,
+    country: location.country,
+    regionCode: location.regionCode,
+    locationLabel: location.regionName ?? location.country,
   });
 
   await db.insert(claims).values({
@@ -113,8 +171,8 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     languageConfidence: Math.round(extraction.language_confidence),
     claimType: extraction.claim_type,
     sensitivity: extraction.sensitivity,
-    country: options.country ?? null,
-    regionCode: options.regionCode ?? null,
+    country: location.country ?? null,
+    regionCode: location.regionCode ?? null,
     locationText: extraction.location_hints.join(", ") || null,
   });
 
@@ -164,10 +222,10 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
 
   try {
     await recordVerificationDemand({
-      country: options.country,
-      regionCode: options.regionCode,
+      country: location.country,
+      regionCode: location.regionCode,
       claimType: extraction.claim_type,
-      clusterKey: clusterKeyFor(extraction, options.country),
+      clusterKey: clusterKeyFor(extraction, location.country),
       status: payload.status,
     });
   } catch {
@@ -183,5 +241,7 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     extraction,
     evidence,
     assessment,
+    location,
+    versions: await loadVersions(answerId),
   };
 }

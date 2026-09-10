@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { count } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { regions, sources } from "@/lib/db/schema";
+import { CheckForm } from "./check-form";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +23,7 @@ export default async function Home() {
   const counts = await loadRegistryCounts();
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-5 py-14">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-5 py-10">
       <header className="flex flex-col gap-3">
         <p className="text-sm font-medium tracking-wide text-zinc-500 uppercase">
           Amana Check
@@ -30,61 +32,53 @@ export default async function Home() {
           Check before you share.
         </h1>
         <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          A community-facing trust layer for fragile information environments.
-          Paste a message, claim, or question. Amana answers with what is
-          actually known — sourced, dated, and actionable — in your language.
+          Paste a rumor, forwarded message, or question in any language. Amana
+          answers with what is actually known — sourced, dated, and actionable —
+          and says plainly when it cannot tell.
         </p>
       </header>
 
-      <section className="flex flex-col gap-3">
-        <button
-          type="button"
-          disabled
-          className="flex h-14 w-full items-center justify-center rounded-xl bg-zinc-900 text-base font-medium text-white opacity-60 dark:bg-zinc-50 dark:text-zinc-900"
+      <CheckForm />
+
+      <section className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-5 text-sm dark:border-zinc-800">
+        <h2 className="font-semibold text-zinc-900 dark:text-zinc-50">
+          How Amana decides
+        </h2>
+        <ul className="flex flex-col gap-2 text-zinc-600 dark:text-zinc-400">
+          <li>
+            Sources are tiered: official primary, then independent fact-checkers
+            and humanitarian organisations, then credible media.
+          </li>
+          <li>
+            Every answer lists its evidence and when it was last checked.
+            &ldquo;Unknown&rdquo; is a valid answer, and absence of evidence is
+            never treated as proof of safety.
+          </li>
+          <li>
+            When sources are older than the freshness window for that kind of
+            claim, Amana refuses a verdict instead of guessing.
+          </li>
+        </ul>
+        <Link
+          href="/methodology"
+          className="font-medium text-sky-700 underline dark:text-sky-400"
         >
-          Check a message
-        </button>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            disabled
-            className="flex h-12 items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 opacity-60 dark:border-zinc-800 dark:text-zinc-300"
-          >
-            Ask a question
-          </button>
-          <button
-            type="button"
-            disabled
-            className="flex h-12 items-center justify-center rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 opacity-60 dark:border-zinc-800 dark:text-zinc-300"
-          >
-            Get help now
-          </button>
-        </div>
-        <p className="text-sm text-zinc-500">
-          The check interface ships in Phase 3. The trust engine and data layer
-          are being built now.
-        </p>
+          Read the full method
+        </Link>
       </section>
 
-      <section className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-5 text-sm dark:border-zinc-800">
-        <h2 className="font-medium text-zinc-900 dark:text-zinc-50">
-          Foundation status
-        </h2>
+      <footer className="flex flex-col gap-1 text-xs text-zinc-500">
         {counts ? (
-          <ul className="flex flex-col gap-1 text-zinc-600 dark:text-zinc-400">
-            <li>{counts.regions} regions registered (Nigeria + Kenya)</li>
-            <li>{counts.sources} sources registered</li>
-            <li>Fail-closed AI routing: ZDR + no-training providers only</li>
-            <li>Every input de-identified and unlinked from identifiers</li>
-          </ul>
-        ) : (
-          <p className="text-zinc-500">
-            Database not reachable. Copy <code>.env.example</code> to{" "}
-            <code>.env</code> and run <code>bun run db:migrate</code> then{" "}
-            <code>bun run db:seed</code>.
+          <p>
+            {counts.regions} regions and {counts.sources} sources registered
+            across Nigeria and Kenya.
           </p>
-        )}
-      </section>
+        ) : null}
+        <p>
+          Checks are stored without your identity. Amana never stores raw IP
+          addresses and never shares what one person asked.
+        </p>
+      </footer>
     </main>
   );
 }
