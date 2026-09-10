@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import type { AnswerVersionInfo } from "@/lib/pipeline/answer";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { AnswerTimings, AnswerVersionInfo } from "@/lib/pipeline/answer";
 import type { ResolvedLocation } from "@/lib/locale/precedence";
 import type { AnswerPayload } from "@/lib/trust/types";
 import { AnswerCard } from "./answer-card";
@@ -21,14 +21,22 @@ interface AskResponse {
     locationHints: string[];
   };
   versions: AnswerVersionInfo[];
+  timing: {
+    totalMs: number;
+    pipelineMs: number;
+    stages: AnswerTimings["stages"];
+  };
 }
 
 const CHECKS_KEY = "amana_checks_v1";
 
 const EXAMPLES = [
-  "NEMA has issued a flood alert for Benue State",
-  "Dem talk say FG dey give N75,000, make you register with dis link, na true?",
-  "Kuna mlipuko wa kipindupindu katika kaunti ya Nairobi",
+  ["Flood alert", "NEMA has issued a flood alert for Benue State"],
+  [
+    "Cash offer",
+    "Dem talk say FG dey give N75,000, make you register with dis link, na true?",
+  ],
+  ["Health rumor", "Kuna mlipuko wa kipindupindu katika kaunti ya Nairobi"],
 ];
 
 function readChecks(): Record<string, { version: number }> {
@@ -55,6 +63,7 @@ function rememberCheck(claimHash: string, version: number) {
 }
 
 export function CheckForm() {
+  const statusRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState("");
   const [country, setCountry] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">(
@@ -63,6 +72,21 @@ export function CheckForm() {
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<AskResponse | null>(null);
   const [updatedSince, setUpdatedSince] = useState(false);
+
+  useEffect(() => {
+    if (state === "idle") return;
+
+    const frame = window.requestAnimationFrame(() => {
+      statusRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [state]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,92 +135,148 @@ export function CheckForm() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <form onSubmit={onSubmit} className="flex flex-col gap-3">
-        <label
-          htmlFor="claim"
-          className="text-sm font-medium text-zinc-800 dark:text-zinc-200"
-        >
-          Paste a message, claim, or question
-        </label>
-        <textarea
-          id="claim"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          rows={4}
-          maxLength={4000}
-          placeholder={
-            'Any language works. For example: "Dem talk say FG dey give N75,000, na true?"'
-          }
-          className="w-full resize-y rounded-xl border border-zinc-300 bg-white px-4 py-3 text-base text-zinc-900 outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:focus:border-zinc-300"
-        />
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            disabled={state === "loading" || text.trim().length < 3}
-            className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
-          >
-            {state === "loading" ? "Checking…" : "Check before you share"}
-          </button>
-          <label className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Focus
-            <select
-              value={country}
-              onChange={(event) => setCountry(event.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+    <div className="min-w-0 lg:-mt-10">
+      <form
+        onSubmit={onSubmit}
+        className="overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_28px_80px_-36px_rgba(17,37,31,0.38)]"
+      >
+        <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="grid size-8 place-items-center rounded-full bg-brand-soft text-brand-strong"
             >
-              <option value="">Auto (from claim and region)</option>
-              <option value="NG">Nigeria</option>
-              <option value="KE">Kenya</option>
-            </select>
-          </label>
+              ?
+            </span>
+            <div>
+              <h2 className="font-semibold tracking-[-0.02em] text-ink">
+                Check a claim
+              </h2>
+              <p className="text-xs text-muted">
+                A check may take around a minute
+              </p>
+            </div>
+          </div>
+          <span className="hidden items-center gap-2 text-xs font-medium text-muted sm:flex">
+            <span className="size-1.5 rounded-full bg-emerald-500" />
+            No account required
+          </span>
         </div>
-        <p className="text-xs text-zinc-500">
-          Amana reads the language of your message and answers in it. It uses
-          official and trusted sources only, and says when evidence is missing
-          or too old.
+
+        <div className="p-5 sm:p-6">
+          <label htmlFor="claim" className="sr-only">
+            Paste a rumor, message, or question
+          </label>
+          <div className="rounded-2xl border border-line bg-background">
+            <textarea
+              id="claim"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              rows={7}
+              maxLength={4000}
+              placeholder="Paste the message exactly as you received it. Any language works."
+              className="min-h-44 w-full resize-y bg-transparent px-4 pt-4 pb-2 text-base leading-7 text-ink placeholder:text-muted/70 sm:px-5 sm:pt-5"
+            />
+            <div className="flex items-center justify-between border-t border-line/80 px-4 pt-3 pb-3 text-xs text-muted sm:px-5">
+              <span>Rumor, question, link text, or voice-note transcript</span>
+              <span className="font-mono tabular-nums">{text.length}/4000</span>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-ink">
+              Where should we check?
+              <select
+                value={country}
+                onChange={(event) => setCountry(event.target.value)}
+                className="h-12 rounded-xl border border-line bg-background px-3 text-sm font-normal text-ink transition-colors outline-none hover:border-muted focus:border-brand"
+              >
+                <option value="">Choose automatically</option>
+                <option value="NG">Nigeria</option>
+                <option value="KE">Kenya</option>
+              </select>
+            </label>
+            <button
+              type="submit"
+              disabled={state === "loading" || text.trim().length < 3}
+              className="group flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-[0_8px_22px_-10px_rgba(15,113,91,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[#095343] disabled:translate-y-0 disabled:opacity-45 sm:min-w-40"
+            >
+              {state === "loading" ? (
+                <>
+                  <span className="size-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                  Checking
+                </>
+              ) : (
+                <>
+                  Check it <span aria-hidden="true">→</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="mt-6 border-t border-line pt-5">
+            <p className="text-xs font-semibold tracking-[0.12em] text-muted uppercase">
+              Try an example
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {EXAMPLES.map(([label, example]) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => setText(example)}
+                  className="rounded-full border border-line bg-background px-3 py-2 text-xs font-medium text-muted transition-colors hover:border-brand hover:text-brand-strong"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <p className="border-t border-line bg-surface-muted/65 px-5 py-3 text-xs leading-5 text-muted sm:px-6">
+          Amana answers in the message&apos;s language. Checks may be stored
+          without your identity to improve coverage.
         </p>
       </form>
 
-      <div className="flex flex-wrap gap-2">
-        {EXAMPLES.map((example) => (
-          <button
-            key={example}
-            type="button"
-            onClick={() => setText(example)}
-            className="rounded-full border border-zinc-300 px-3 py-1 text-xs text-zinc-600 hover:border-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+      <div ref={statusRef} aria-live="polite" className="mt-5 scroll-mt-24">
+        {state === "loading" ? (
+          <div className="overflow-hidden rounded-2xl border border-brand/20 bg-brand-soft p-5 text-sm text-ink">
+            <div className="flex items-center gap-3">
+              <span className="relative flex size-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-40" />
+                <span className="relative inline-flex size-3 rounded-full bg-accent shadow-[0_0_0_3px_rgba(217,247,95,0.12)]" />
+              </span>
+              <p className="font-semibold">Checking the message</p>
+            </div>
+            <div className="mt-4 grid gap-2 text-muted sm:grid-cols-3">
+              <p>Reading the claim</p>
+              <p>Searching trusted sources</p>
+              <p>Checking dates and coverage</p>
+            </div>
+          </div>
+        ) : null}
+
+        {error ? (
+          <p
+            role="alert"
+            className="rounded-2xl border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100"
           >
-            {example.length > 48 ? `${example.slice(0, 48)}…` : example}
-          </button>
-        ))}
+            <span className="font-semibold">The check did not finish.</span>{" "}
+            {error}
+          </p>
+        ) : null}
+
+        {response ? (
+          <AnswerCard
+            payload={response.payload}
+            answerId={response.answerId}
+            versions={response.versions}
+            updatedSince={updatedSince}
+            durationMs={response.timing.totalMs}
+          />
+        ) : null}
       </div>
-
-      {state === "loading" ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-4 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-          <p className="animate-pulse font-medium">
-            Understanding the message…
-          </p>
-          <p>Searching trusted sources and checking freshness.</p>
-          <p className="text-xs text-zinc-500">
-            This can take up to 20 seconds on a slow connection.
-          </p>
-        </div>
-      ) : null}
-
-      {error ? (
-        <p className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-          {error}
-        </p>
-      ) : null}
-
-      {response ? (
-        <AnswerCard
-          payload={response.payload}
-          answerId={response.answerId}
-          versions={response.versions}
-          updatedSince={updatedSince}
-        />
-      ) : null}
     </div>
   );
 }

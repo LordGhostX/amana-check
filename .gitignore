@@ -43,3 +43,6 @@ next-env.d.ts
 
 # eval output
 /eval/results
+
+# local working notes (never committed)
+/pending/

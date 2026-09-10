@@ -4,6 +4,7 @@ import {
   ADMIN_COOKIE,
   ADMIN_SESSION_TTL_MS,
   createSessionToken,
+  isSameOriginRequest,
   verifyPasscode,
 } from "@/lib/admin/auth";
 import { hashIp, ipFromHeaders } from "@/lib/locale/hash";
@@ -15,6 +16,10 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({ passcode: z.string().min(1).max(200) });
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "invalid_origin" }, { status: 403 });
+  }
+
   const ip = ipFromHeaders(request.headers);
   if (ip) {
     try {

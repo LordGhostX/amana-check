@@ -35,17 +35,23 @@ export default async function AdminPage({
 
   if (!authed) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-5 py-10">
-        <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Review console
-          </h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Enter the admin passcode to review answers and view aggregated
-            verification demand.
-          </p>
-        </header>
-        <AdminLogin />
+      <main className="page-grid grid flex-1 place-items-center px-5 py-12">
+        <div className="w-full max-w-md overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_28px_80px_-36px_rgba(17,37,31,0.45)]">
+          <header className="border-b border-line p-6">
+            <p className="font-mono text-xs tracking-[0.16em] text-brand-strong uppercase">
+              Restricted access
+            </p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-ink">
+              Review console
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Sign in to review answers and read aggregated verification demand.
+            </p>
+          </header>
+          <div className="p-6">
+            <AdminLogin />
+          </div>
+        </div>
       </main>
     );
   }
@@ -57,15 +63,20 @@ export default async function AdminPage({
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-5 py-10">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Review console
-        </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+    <main className="mx-auto flex w-full max-w-7xl min-w-0 flex-1 flex-col gap-8 overflow-x-clip px-4 py-10 sm:px-8 sm:py-14">
+      <header className="grid min-w-0 gap-4 md:grid-cols-[1fr_0.8fr] md:items-end">
+        <div className="min-w-0">
+          <p className="font-mono text-xs tracking-[0.16em] text-brand-strong uppercase">
+            Operations
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tighter text-ink sm:text-5xl">
+            Review console
+          </h1>
+        </div>
+        <p className="min-w-0 text-sm leading-6 wrap-break-word text-muted">
           Review and correct answers, and read aggregated verification demand.
-          The dashboard measures what communities are checking, not what is
-          happening.
+          The dashboard shows what communities are checking, so its counts are
+          not incident reports.
         </p>
       </header>
       <AdminConsole

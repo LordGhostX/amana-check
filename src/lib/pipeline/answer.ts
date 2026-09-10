@@ -38,6 +38,20 @@ export interface AnswerVersionInfo {
   changeReason: string | null;
 }
 
+export interface AnswerTimings {
+  totalMs: number;
+  stages: {
+    extractionMs: number;
+    cacheLookupMs: number;
+    locationMs: number;
+    evidenceSearchMs: number;
+    corpusFreshnessMs: number;
+    referralsMs: number;
+    synthesisMs: number;
+    persistenceMs: number;
+  };
+}
+
 export interface AskResult {
   answerId: number;
   claimHash: string;
@@ -49,6 +63,13 @@ export interface AskResult {
   assessment: EvidenceAssessment;
   location: ResolvedLocation;
   versions: AnswerVersionInfo[];
+  timing: AnswerTimings;
+}
+
+async function timed<T>(work: () => Promise<T>): Promise<[T, number]> {
+  const startedAt = Date.now();
+  const value = await work();
+  return [value, Date.now() - startedAt];
 }
 
 export function claimHashFor(
@@ -129,7 +150,25 @@ function cachedLocation(payload: AnswerPayload): ResolvedLocation {
 }
 
 export async function answerClaim(options: AskOptions): Promise<AskResult> {
-  const extraction = await extractClaim(options.text);
+  const pipelineStartedAt = Date.now();
+  const timing: AnswerTimings = {
+    totalMs: 0,
+    stages: {
+      extractionMs: 0,
+      cacheLookupMs: 0,
+      locationMs: 0,
+      evidenceSearchMs: 0,
+      corpusFreshnessMs: 0,
+      referralsMs: 0,
+      synthesisMs: 0,
+      persistenceMs: 0,
+    },
+  };
+
+  const [extraction, extractionMs] = await timed(() =>
+    extractClaim(options.text),
+  );
+  timing.stages.extractionMs = extractionMs;
   const claimHash = claimHashFor(
     extraction,
     options.fallbackCountry,
@@ -138,13 +177,17 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
   const lang = extraction.detected_lang;
 
   if (!options.bypassCache) {
-    const cachedRows = await db
-      .select()
-      .from(answers)
-      .where(and(eq(answers.claimHash, claimHash), eq(answers.lang, lang)))
-      .limit(1);
+    const [cachedRows, cacheLookupMs] = await timed(() =>
+      db
+        .select()
+        .from(answers)
+        .where(and(eq(answers.claimHash, claimHash), eq(answers.lang, lang)))
+        .limit(1),
+    );
+    timing.stages.cacheLookupMs = cacheLookupMs;
     const cached = cachedRows[0];
     if (cached) {
+      const persistenceStartedAt = Date.now();
       if (options.recordDemand !== false) {
         await recordDemandSafely(
           extraction,
@@ -154,6 +197,9 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
           cached.payload.status,
         );
       }
+      const versions = await loadVersions(cached.id);
+      timing.stages.persistenceMs = Date.now() - persistenceStartedAt;
+      timing.totalMs = Date.now() - pipelineStartedAt;
       return {
         answerId: cached.id,
         claimHash,
@@ -164,27 +210,48 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
         evidence: [],
         assessment: cachedAssessment(cached.payload),
         location: cachedLocation(cached.payload),
-        versions: await loadVersions(cached.id),
+        versions,
+        timing,
       };
     }
   }
 
-  const location = await resolveLocation({
-    claimLocationHints: extraction.location_hints,
-    fallback: {
-      country: options.fallbackCountry,
-      regionCode: options.fallbackRegionCode,
-      source: options.fallbackSource ?? "request",
-    },
-  });
+  const [location, locationMs] = await timed(() =>
+    resolveLocation({
+      claimLocationHints: extraction.location_hints,
+      fallback: {
+        country: options.fallbackCountry,
+        regionCode: options.fallbackRegionCode,
+        source: options.fallbackSource ?? "request",
+      },
+    }),
+  );
+  timing.stages.locationMs = locationMs;
 
-  const evidence = await searchEvidence({
-    query: [extraction.english_query, ...extraction.keywords].join(" "),
-    country: location.country,
-    regionLabel: location.regionName ?? extraction.location_hints[0],
-    limit: 8,
-  });
-  const newest = await corpusNewest(location.country);
+  const [evidenceResult, newestResult, referralResult] = await Promise.all([
+    timed(() =>
+      searchEvidence({
+        query: [extraction.english_query, ...extraction.keywords].join(" "),
+        country: location.country,
+        regionLabel: location.regionName ?? extraction.location_hints[0],
+        limit: 8,
+      }),
+    ),
+    timed(() => corpusNewest(location.country)),
+    timed(() =>
+      referralsFor(
+        location.country,
+        categoriesForClaimType(extraction.claim_type),
+        { regionCode: location.regionCode },
+      ),
+    ),
+  ]);
+  const [evidence, evidenceSearchMs] = evidenceResult;
+  const [newest, corpusFreshnessMs] = newestResult;
+  const [referralRows, referralsMs] = referralResult;
+  timing.stages.evidenceSearchMs = evidenceSearchMs;
+  timing.stages.corpusFreshnessMs = corpusFreshnessMs;
+  timing.stages.referralsMs = referralsMs;
   const assessment = capForUnmatchedLocation(
     assessEvidence(
       extraction.claim_type,
@@ -200,28 +267,26 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     evidence.map((item) => ({ title: item.title, content: item.content })),
   );
 
-  const referralRows = await referralsFor(
-    location.country,
-    categoriesForClaimType(extraction.claim_type),
-    { regionCode: location.regionCode },
+  const [payload, synthesisMs] = await timed(() =>
+    synthesizeAnswer({
+      claim: extraction.claim_text,
+      extraction,
+      assessment,
+      evidence,
+      referrals: referralRows.map((row) => ({
+        name: row.name,
+        phone: row.phone ?? "no phone listed",
+        description: row.description,
+        verified: row.verifiedAt !== null,
+      })),
+      country: location.country,
+      regionCode: location.regionCode,
+      locationLabel: location.regionName ?? location.country,
+    }),
   );
+  timing.stages.synthesisMs = synthesisMs;
 
-  const payload = await synthesizeAnswer({
-    claim: extraction.claim_text,
-    extraction,
-    assessment,
-    evidence,
-    referrals: referralRows.map((row) => ({
-      name: row.name,
-      phone: row.phone ?? "no phone listed",
-      description: row.description,
-      verified: row.verifiedAt !== null,
-    })),
-    country: location.country,
-    regionCode: location.regionCode,
-    locationLabel: location.regionName ?? location.country,
-  });
-
+  const persistenceStartedAt = Date.now();
   await db.insert(claims).values({
     claimHash,
     claimText: extraction.claim_text,
@@ -281,6 +346,10 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     );
   }
 
+  const versions = await loadVersions(answerId);
+  timing.stages.persistenceMs = Date.now() - persistenceStartedAt;
+  timing.totalMs = Date.now() - pipelineStartedAt;
+
   return {
     answerId,
     claimHash,
@@ -291,6 +360,7 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     evidence,
     assessment,
     location,
-    versions: await loadVersions(answerId),
+    versions,
+    timing,
   };
 }

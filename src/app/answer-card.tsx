@@ -1,46 +1,64 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { AnswerPayload, AnswerStatus } from "@/lib/trust/types";
 import type { AnswerVersionInfo } from "@/lib/pipeline/answer";
 
 const STATUS_META: Record<
   AnswerStatus,
-  { label: string; description: string; className: string }
+  {
+    label: string;
+    description: string;
+    badgeClass: string;
+    panelClass: string;
+    symbol: string;
+  }
 > = {
   verified: {
     label: "Verified",
     description: "Evidence meets the freshness and source requirements.",
-    className:
-      "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
+    badgeClass:
+      "bg-emerald-700 text-white dark:bg-emerald-400 dark:text-emerald-950",
+    panelClass:
+      "border-emerald-300 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/50",
+    symbol: "✓",
   },
   developing: {
     label: "Developing",
     description:
       "Some evidence exists, but not enough to verify. Treat with caution.",
-    className:
-      "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200",
+    badgeClass: "bg-amber-500 text-amber-950",
+    panelClass:
+      "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/50",
+    symbol: "~",
   },
   unverified: {
     label: "Not verified",
     description:
       "No supporting or contradicting source was found. The claim is neither confirmed nor denied.",
-    className:
-      "border-zinc-300 bg-zinc-50 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200",
+    badgeClass: "bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-950",
+    panelClass:
+      "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60",
+    symbol: "?",
   },
   not_confirmed_stale: {
     label: "Not confirmed: evidence too old",
     description:
       "Our sources are older than the freshness window for this kind of claim. Do not read this as safe.",
-    className:
-      "border-orange-300 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-200",
+    badgeClass:
+      "bg-orange-600 text-white dark:bg-orange-400 dark:text-orange-950",
+    panelClass:
+      "border-orange-300 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/50",
+    symbol: "!",
   },
   unknown_coverage: {
     label: "No coverage yet",
     description:
       "Amana has no ingested sources for this area or topic yet, so it cannot check this claim.",
-    className:
-      "border-zinc-300 bg-zinc-50 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200",
+    badgeClass: "bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-950",
+    panelClass:
+      "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60",
+    symbol: "?",
   },
 };
 
@@ -55,26 +73,93 @@ function formatDate(value: string | null | undefined): string {
 
 function stripCitations(value: string): string {
   return value
-    .replace(/\[S\d+\]/g, "")
+    .replace(/\s*\[S\d+\]/g, "")
+    .replace(/\s+([,.;:!?])/g, "$1")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
 
+function citationRefs(value: string): number[] {
+  return Array.from(value.matchAll(/\[S(\d+)\]/g), (match) => Number(match[1]));
+}
+
+function formatShareDate(value: string): string {
+  return new Date(value).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
+function formatDuration(durationMs: number): string {
+  const totalSeconds = Math.max(1, Math.round(durationMs / 1000));
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
+}
+
+function renderCitations(value: string): ReactNode[] {
+  const parts = value.split(/(\[S\d+\])/g);
+  return parts.map((part, index) => {
+    const match = part.match(/^\[S(\d+)\]$/);
+    if (!match) return part;
+    return (
+      <a
+        key={`${part}-${index}`}
+        href={`#evidence-${match[1]}`}
+        className="ml-1 inline-flex min-w-5 items-center justify-center rounded bg-brand-soft px-1 font-mono text-[0.7rem] font-semibold text-brand-strong no-underline"
+        aria-label={`See evidence source ${match[1]}`}
+      >
+        {match[1]}
+      </a>
+    );
+  });
+}
+
 function buildShareText(payload: AnswerPayload): string {
   const meta = STATUS_META[payload.status];
-  const publishers = Array.from(
-    new Set(payload.evidence.map((item) => item.publisher)),
-  );
+  const citedIndexes = Array.from(
+    new Set(
+      [...payload.whatWeKnow, ...payload.whatWeDontKnow].flatMap(citationRefs),
+    ),
+  )
+    .map((reference) => reference - 1)
+    .filter((index) => index >= 0 && index < payload.evidence.length);
+  const sourceIndexes =
+    citedIndexes.length > 0
+      ? citedIndexes
+      : payload.evidence.slice(0, 3).map((_, index) => index);
+  const sourceLines = sourceIndexes.flatMap((sourceIndex, listIndex) => {
+    const item = payload.evidence[sourceIndex]!;
+    const heading = `${listIndex + 1}. ${item.publisher}: ${item.title} (${formatDate(item.publishedAt)})`;
+    return /^https?:\/\//i.test(item.url)
+      ? [heading, `   ${item.url}`]
+      : [heading];
+  });
+
   return [
-    "AMANA CHECK: check before you share",
-    `Claim: ${payload.claim}`,
-    `Status: ${meta.label}`,
+    "Amana Check",
+    "",
+    "Claim",
+    payload.claim,
+    "",
+    "Verdict",
+    meta.label,
+    meta.description,
+    "",
+    ...(payload.whatWeKnow.length > 0 ? ["What the sources say"] : []),
     ...payload.whatWeKnow.map((bullet) => `- ${stripCitations(bullet)}`),
-    publishers.length > 0 ? `Sources: ${publishers.join(", ")}` : "",
-    `Checked: ${new Date(payload.checkedAt).toLocaleString()}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+    ...(payload.whatWeKnow.length > 0 ? [""] : []),
+    ...(payload.whatWeDontKnow.length > 0 ? ["What remains unclear"] : []),
+    ...payload.whatWeDontKnow.map((bullet) => `- ${stripCitations(bullet)}`),
+    ...(payload.whatWeDontKnow.length > 0 ? [""] : []),
+    ...(sourceLines.length > 0 ? ["Sources", ...sourceLines, ""] : []),
+    `Checked ${formatShareDate(payload.checkedAt)}`,
+  ].join("\n");
 }
 
 export function AnswerCard({
@@ -82,11 +167,13 @@ export function AnswerCard({
   answerId,
   versions,
   updatedSince,
+  durationMs,
 }: {
   payload: AnswerPayload;
   answerId: number;
   versions: AnswerVersionInfo[];
   updatedSince: boolean;
+  durationMs: number;
 }) {
   const [copied, setCopied] = useState(false);
   const [feedbackState, setFeedbackState] = useState<
@@ -123,174 +210,208 @@ export function AnswerCard({
     <article
       lang={payload.answerLang}
       translate="no"
-      className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+      className="overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_24px_70px_-40px_rgba(17,37,31,0.5)]"
     >
-      <header className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+      <header className={`border-b p-5 sm:p-6 ${meta.panelClass}`}>
+        <div className="flex items-start gap-4">
           <span
-            className={`rounded-full border px-3 py-1 text-sm font-medium ${meta.className}`}
+            aria-hidden="true"
+            className={`grid size-11 shrink-0 place-items-center rounded-full text-lg font-bold ${meta.badgeClass}`}
           >
-            {meta.label}
+            {meta.symbol}
           </span>
-          {payload.machineTranslated ? (
-            <span className="rounded-full border border-zinc-300 px-3 py-1 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
-              Machine-translated
-            </span>
-          ) : null}
-          <span className="text-xs text-zinc-500">
-            Checked {new Date(payload.checkedAt).toLocaleString()}
-          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl font-semibold tracking-[-0.035em] text-ink">
+                {meta.label}
+              </h2>
+              {payload.machineTranslated ? (
+                <span className="rounded-full border border-current/20 px-2 py-0.5 text-xs font-medium text-muted">
+                  Machine-translated
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-sm leading-6 text-muted">
+              {meta.description} {payload.statusReason}
+            </p>
+            <p className="mt-3 flex flex-wrap gap-x-2 font-mono text-xs text-muted">
+              <span>
+                Checked {new Date(payload.checkedAt).toLocaleString()}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>Completed in {formatDuration(durationMs)}</span>
+            </p>
+          </div>
         </div>
 
         {updatedSince ? (
-          <p className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200">
-            Updated since you last checked this claim.
+          <p className="mt-4 rounded-xl border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200">
+            This answer changed since your last check.
           </p>
         ) : null}
-
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium tracking-wide text-zinc-500 uppercase">
-            What you sent
-          </p>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
-            {payload.claim}
-          </p>
-        </div>
-
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {meta.description} {payload.statusReason}
-        </p>
       </header>
 
-      {payload.whatWeKnow.length > 0 ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            What we know
-          </h2>
-          <ul className="flex flex-col gap-2">
-            {payload.whatWeKnow.map((bullet, index) => (
-              <li
-                key={index}
-                className="flex gap-2 text-sm leading-6 text-zinc-700 dark:text-zinc-300"
-              >
-                <span aria-hidden className="text-zinc-400">
-                  •
-                </span>
-                <span>{bullet}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="p-5 sm:p-6">
+        <section className="rounded-2xl bg-surface-muted p-4 sm:p-5">
+          <p className="text-xs font-semibold tracking-[0.12em] text-muted uppercase">
+            What you sent
+          </p>
+          <p className="mt-2 text-base leading-7 font-medium text-ink">
+            &quot;{payload.claim}&quot;
+          </p>
         </section>
-      ) : null}
 
-      {payload.whatWeDontKnow.length > 0 ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            What we don&apos;t know
-          </h2>
-          <ul className="flex flex-col gap-2">
-            {payload.whatWeDontKnow.map((bullet, index) => (
-              <li
-                key={index}
-                className="flex gap-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400"
-              >
-                <span aria-hidden className="text-zinc-400">
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {payload.whatWeKnow.length > 0 ? (
+            <section className="rounded-2xl border border-line p-4 sm:p-5">
+              <h3 className="flex items-center gap-2 font-semibold text-ink">
+                <span aria-hidden="true" className="text-brand-strong">
+                  ✓
+                </span>
+                What we know
+              </h3>
+              <ul className="mt-3 flex flex-col gap-3">
+                {payload.whatWeKnow.map((bullet, index) => (
+                  <li key={index} className="text-sm leading-6 text-foreground">
+                    {renderCitations(bullet)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {payload.whatWeDontKnow.length > 0 ? (
+            <section className="rounded-2xl border border-line p-4 sm:p-5">
+              <h3 className="flex items-center gap-2 font-semibold text-ink">
+                <span aria-hidden="true" className="text-amber-600">
                   ?
                 </span>
-                <span>{stripCitations(bullet)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+                What we don&apos;t know
+              </h3>
+              <ul className="mt-3 flex flex-col gap-3">
+                {payload.whatWeDontKnow.map((bullet, index) => (
+                  <li key={index} className="text-sm leading-6 text-muted">
+                    {stripCitations(bullet)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </div>
 
-      {payload.evidence.length > 0 ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            Evidence
-          </h2>
-          <div className="flex flex-col gap-2">
-            {payload.evidence.map((item, index) => {
-              const sourceUrl = /^https?:\/\//i.test(item.url)
-                ? item.url
-                : null;
-              return (
-                <details
-                  key={`${item.documentId}-${index}`}
-                  className="rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
-                >
-                  <summary className="cursor-pointer text-sm text-zinc-800 dark:text-zinc-200">
-                    {item.publisher} · T{item.tier} ·{" "}
-                    {formatDate(item.publishedAt)}
-                  </summary>
-                  <div className="mt-2 flex flex-col gap-2">
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      {item.title}
-                    </p>
-                    {item.excerpt ? (
-                      <p className="text-sm text-zinc-500 italic dark:text-zinc-500">
-                        &quot;{item.excerpt}&quot;
+        {payload.evidence.length > 0 ? (
+          <section className="mt-7">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.12em] text-brand-strong uppercase">
+                  Source trail
+                </p>
+                <h3 className="mt-1 text-xl font-semibold tracking-tight text-ink">
+                  Evidence checked
+                </h3>
+              </div>
+              <span className="font-mono text-xs text-muted">
+                {payload.evidence.length} source
+                {payload.evidence.length === 1 ? "" : "s"}
+              </span>
+            </div>
+            <div className="mt-4 flex flex-col gap-3">
+              {payload.evidence.map((item, index) => {
+                const sourceUrl = /^https?:\/\//i.test(item.url)
+                  ? item.url
+                  : null;
+                return (
+                  <details
+                    key={`${item.documentId}-${index}`}
+                    id={`evidence-${index + 1}`}
+                    className="group rounded-2xl border border-line bg-background px-4 py-3 open:bg-surface"
+                  >
+                    <summary className="flex cursor-pointer list-none items-center gap-3 text-sm text-ink marker:hidden">
+                      <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-brand-soft font-mono text-xs font-semibold text-brand-strong">
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="font-semibold">{item.publisher}</span>
+                        <span className="ml-2 text-muted">
+                          T{item.tier} · {formatDate(item.publishedAt)}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="text-muted transition-transform group-open:rotate-45"
+                      >
+                        +
+                      </span>
+                    </summary>
+                    <div className="mt-3 border-t border-line pt-3 pl-10">
+                      <p className="text-sm leading-6 text-foreground">
+                        {item.title}
+                      </p>
+                      {item.excerpt ? (
+                        <p className="mt-2 border-l-2 border-line pl-3 text-sm leading-6 text-muted italic">
+                          &quot;{item.excerpt}&quot;
+                        </p>
+                      ) : null}
+                      {sourceUrl ? (
+                        <a
+                          href={sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-strong underline decoration-brand/30 underline-offset-4"
+                        >
+                          Read original source <span aria-hidden="true">↗</span>
+                        </a>
+                      ) : null}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
+        {payload.nextSteps.length > 0 ? (
+          <section className="mt-7 rounded-2xl bg-panel p-5 text-white">
+            <h3 className="text-lg font-semibold tracking-[-0.02em]">
+              What you can do now
+            </h3>
+            <ol className="mt-4 flex flex-col gap-4">
+              {payload.nextSteps.map((step, index) => (
+                <li key={index} className="flex gap-3 text-sm">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand-soft font-mono text-xs font-semibold text-brand-strong ring-1 ring-white/10 ring-inset">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="font-semibold text-white">{step.title}</p>
+                    {step.detail ? (
+                      <p className="mt-1 leading-6 text-white/65">
+                        {step.detail}
                       </p>
                     ) : null}
-                    {sourceUrl ? (
-                      <a
-                        href={sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-sky-700 underline dark:text-sky-400"
-                      >
-                        Open original source
-                      </a>
-                    ) : null}
                   </div>
-                </details>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+      </div>
 
-      {payload.nextSteps.length > 0 ? (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            What you can do now
-          </h2>
-          <ol className="flex flex-col gap-2">
-            {payload.nextSteps.map((step, index) => (
-              <li
-                key={index}
-                className="rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800"
-              >
-                <p className="font-medium text-zinc-800 dark:text-zinc-200">
-                  {step.title}
-                </p>
-                {step.detail ? (
-                  <p className="text-zinc-600 dark:text-zinc-400">
-                    {step.detail}
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
-
-      <footer className="flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <div className="flex flex-wrap items-center gap-2">
+      <footer className="border-t border-line bg-surface-muted/60 p-5 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
             type="button"
             onClick={copyShare}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-50 dark:text-zinc-900"
+            className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#095343]"
           >
-            {copied ? "Copied" : "Share what we know"}
+            {copied ? "Copied to clipboard" : "Copy sourced summary"}
           </button>
-          <span className="text-xs text-zinc-500">
-            Shares a source-stamped summary, not the original rumor.
-          </span>
+          <p className="text-xs leading-5 text-muted">
+            Includes the verdict, findings, open questions, and source links.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-zinc-500">Was this useful?</span>
+        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4 text-sm">
+          <span className="mr-1 text-muted">Did this answer help?</span>
           {(
             [
               ["helpful", "Helpful"],
@@ -303,14 +424,14 @@ export function AnswerCard({
               type="button"
               disabled={feedbackState === "sending" || feedbackState === "sent"}
               onClick={() => sendFeedback(rating)}
-              className="rounded-lg border border-zinc-300 px-3 py-1 text-zinc-700 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300"
+              className="rounded-full border border-line bg-surface px-3 py-1.5 text-foreground transition-colors hover:border-brand disabled:opacity-50"
             >
               {label}
             </button>
           ))}
           {feedbackState === "sent" ? (
-            <span className="text-emerald-700 dark:text-emerald-400">
-              Thank you.
+            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+              Thanks.
             </span>
           ) : null}
           {feedbackState === "error" ? (
@@ -321,15 +442,15 @@ export function AnswerCard({
         </div>
 
         {versions.length > 1 ? (
-          <details className="text-sm">
-            <summary className="cursor-pointer text-zinc-600 dark:text-zinc-400">
+          <details className="mt-4 border-t border-line pt-4 text-sm">
+            <summary className="cursor-pointer font-medium text-muted">
               Version history ({versions.length})
             </summary>
             <ul className="mt-2 flex flex-col gap-1">
               {versions.map((version) => (
                 <li
                   key={version.version}
-                  className="flex flex-wrap gap-2 text-zinc-500"
+                  className="flex flex-wrap gap-2 text-muted"
                 >
                   <span>v{version.version}</span>
                   <span>{STATUS_META[version.status].label}</span>

@@ -2,9 +2,9 @@ import { createHmac } from "node:crypto";
 import { optionalEnv } from "@/lib/env";
 
 /**
- * IPs are stored only as HMAC-SHA256(secret, ip) — never raw, never logged.
- * Locale hints and rate limits are the only things keyed by this hash, and
- * neither table may ever be joined to `claims`.
+ * IPs are stored only as HMAC-SHA256(APP_SECRET, ip), never raw and never
+ * logged. Rate limits are the only table keyed by this hash, and that table
+ * is never joined to `claims`.
  */
 export function normalizeIp(raw: string): string {
   let value = raw.trim();
@@ -14,11 +14,9 @@ export function normalizeIp(raw: string): string {
 }
 
 export function hashIp(rawIp: string, secret?: string): string {
-  const key = secret ?? optionalEnv("IP_HASH_SECRET");
+  const key = secret ?? optionalEnv("APP_SECRET");
   if (!key) {
-    throw new Error(
-      "IP_HASH_SECRET is not set — refusing to hash IPs without it",
-    );
+    throw new Error("APP_SECRET is not set, refusing to hash IPs without it");
   }
   return createHmac("sha256", key).update(normalizeIp(rawIp)).digest("hex");
 }

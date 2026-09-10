@@ -44,6 +44,7 @@ async function main() {
           reason: result.assessment.reason,
         },
         evidenceCount: result.evidence.length,
+        timing: result.timing,
         payload: result.payload,
       },
       null,

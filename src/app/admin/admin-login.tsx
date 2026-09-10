@@ -26,7 +26,7 @@ export function AdminLogin() {
         );
         return;
       }
-      window.location.reload();
+      window.location.replace("/admin");
     } catch {
       setError("Could not sign in. Try again.");
     } finally {
@@ -35,11 +35,8 @@ export function AdminLogin() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
-      <label
-        htmlFor="passcode"
-        className="text-sm font-medium text-zinc-800 dark:text-zinc-200"
-      >
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <label htmlFor="passcode" className="text-sm font-semibold text-ink">
         Admin passcode
       </label>
       <input
@@ -47,17 +44,20 @@ export function AdminLogin() {
         type="password"
         value={passcode}
         onChange={(event) => setPasscode(event.target.value)}
-        className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+        autoComplete="current-password"
+        className="h-12 rounded-xl border border-line bg-background px-4 text-base text-ink transition-colors outline-none focus:border-brand"
       />
       <button
         type="submit"
         disabled={sending || passcode.length === 0}
-        className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
+        className="h-12 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-[#095343] disabled:opacity-50"
       >
         {sending ? "Signing in…" : "Sign in"}
       </button>
       {error ? (
-        <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+        <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+          {error}
+        </p>
       ) : null}
     </form>
   );

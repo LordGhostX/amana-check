@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { ADMIN_COOKIE, isAdminCookie } from "@/lib/admin/auth";
+import {
+  ADMIN_COOKIE,
+  isAdminCookie,
+  isSameOriginRequest,
+} from "@/lib/admin/auth";
 import { approveAnswer, correctAnswer } from "@/lib/admin/data";
 import { optionalEnv } from "@/lib/env";
 import { ANSWER_STATUSES } from "@/lib/trust/types";
@@ -25,6 +29,10 @@ const bodySchema = z.discriminatedUnion("action", [
 ]);
 
 export async function POST(request: NextRequest) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "invalid_origin" }, { status: 403 });
+  }
+
   if (!isAdminCookie(request.cookies.get(ADMIN_COOKIE)?.value)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }

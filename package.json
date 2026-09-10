@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "bun run db:setup && next start",
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -15,6 +15,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:seed": "bun run scripts/seed.ts",
+    "db:setup": "bun run db:migrate && bun run db:seed",
     "db:studio": "drizzle-kit studio",
     "ingest": "bun run scripts/ingest.ts",
     "ask": "bun run scripts/ask.ts",
@@ -25,6 +26,7 @@
   },
   "dependencies": {
     "cheerio": "^1.2.0",
+    "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
     "fast-xml-parser": "^5.11.1",
     "html-to-text": "^10.0.1",
@@ -41,7 +43,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "eslint-config-prettier": "^10.1.8",

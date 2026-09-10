@@ -33,24 +33,28 @@ Requires [Bun](https://bun.sh) and a local Postgres.
 bun install
 createdb amana_check
 cp .env.example .env
-# then set OPENROUTER_API_KEY, IP_HASH_SECRET, and ADMIN_PASSCODE
-bun run db:migrate
-bun run db:seed
+# then set OPENROUTER_API_KEY, APP_SECRET, and ADMIN_PASSCODE
+bun run db:setup
+bun run ingest
 bun run dev
 ```
 
-Generate `IP_HASH_SECRET` with `openssl rand -hex 32`.
+`db:setup` runs `db:migrate` then `db:seed`. Both are idempotent, so it is safe to repeat. Generate `APP_SECRET` with `openssl rand -hex 32`. Ingestion is a separate step because it fetches the corpus over the network.
 
 Ingestion falls back to `curl` for feeds that block other HTTP clients, including the ReliefWeb country feeds. curl ships with macOS and GitHub Ubuntu runners. Set `INGEST_CURL_FALLBACK=0` to disable the fallback and fail fast.
+
+## Deploy
+
+`vercel.json` sets the build command to `bun run db:setup && bun run build`, so each deploy migrates and seeds before building. Set `DATABASE_URL` to the pooled Neon connection and `DATABASE_URL_UNPOOLED` to the direct one; migrations use the direct connection. Run `bun run ingest` once against Neon, and again whenever you want a fresh corpus.
 
 ## Scripts
 
 | Command                  | What it does                                                                      |
 | ------------------------ | --------------------------------------------------------------------------------- |
 | `bun run dev`            | Start the app                                                                     |
-| `bun run start`          | Start the production build                                                        |
+| `bun run start`          | Run `db:setup`, then start the production build                                   |
 | `bun run build`          | Production build                                                                  |
-| `bun run typecheck`      | `tsc --noEmit`                                                                    |
+| `bun run typecheck`      | `next typegen` then `tsc --noEmit`                                                |
 | `bun run lint`           | ESLint                                                                            |
 | `bun run format`         | Format with Prettier                                                              |
 | `bun run format:check`   | Verify formatting with Prettier                                                   |
@@ -58,6 +62,7 @@ Ingestion falls back to `curl` for feeds that block other HTTP clients, includin
 | `bun run db:migrate`     | Apply migrations                                                                  |
 | `bun run db:push`        | Push the schema directly to the database                                          |
 | `bun run db:seed`        | Load region registries, sources, and referrals from `data/`                       |
+| `bun run db:setup`       | Run `db:migrate` then `db:seed`                                                   |
 | `bun run db:studio`      | Drizzle Studio                                                                    |
 | `bun run ingest`         | Fetch enabled sources into the corpus (flags: `--source`, `--country`, `--limit`) |
 | `bun run ask`            | Run the full pipeline on a claim (flags: `--ng`, `--ke`, `--fresh`)               |
@@ -99,7 +104,7 @@ docs/                     Plan, methodology, threat model, constraints, future w
 ## Privacy posture
 
 - `claims` stores de-identified input and has **no join keys** to any identifier.
-- IPs are only ever `HMAC-SHA256(IP_HASH_SECRET, ip)` for rate limiting; raw IPs are never stored or logged.
+- IPs are only ever `HMAC-SHA256(APP_SECRET, ip)` for rate limiting; raw IPs are never stored or logged.
 - LLM routing is hardcoded to zero-retention, no-training endpoints. If none is available the request fails closed instead of degrading.
 - Aggregated `events` are k≥3 and represent verification demand, not confirmed incidents.
 

@@ -21,6 +21,7 @@ function clientIpHash(request: NextRequest): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  const requestStartedAt = Date.now();
   const ipHash = clientIpHash(request);
 
   if (ipHash) {
@@ -75,6 +76,12 @@ export async function POST(request: NextRequest) {
       fallbackRegionCode: fallback.regionCode,
       fallbackSource: fallback.source,
     });
+    const totalMs = Date.now() - requestStartedAt;
+    const timing = {
+      totalMs,
+      pipelineMs: result.timing.totalMs,
+      stages: result.timing.stages,
+    };
 
     const response = NextResponse.json({
       answerId: result.answerId,
@@ -91,7 +98,24 @@ export async function POST(request: NextRequest) {
         locationHints: result.extraction.location_hints,
       },
       versions: result.versions,
+      timing,
     });
+    const stage = timing.stages;
+    response.headers.set(
+      "Server-Timing",
+      [
+        `total;dur=${timing.totalMs}`,
+        `pipeline;dur=${timing.pipelineMs}`,
+        `extract;dur=${stage.extractionMs}`,
+        `cache;dur=${stage.cacheLookupMs}`,
+        `location;dur=${stage.locationMs}`,
+        `evidence;dur=${stage.evidenceSearchMs}`,
+        `freshness;dur=${stage.corpusFreshnessMs}`,
+        `referrals;dur=${stage.referralsMs}`,
+        `synthesis;dur=${stage.synthesisMs}`,
+        `persistence;dur=${stage.persistenceMs}`,
+      ].join(", "),
+    );
 
     const cookieOptions = {
       path: "/",

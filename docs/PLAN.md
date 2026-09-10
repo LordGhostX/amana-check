@@ -8,20 +8,20 @@ Amana Check is a community-facing trust layer for fragile information environmen
 
 ## Decision ledger
 
-| Area                | Decision                                                                                                                                                             |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Regions             | Nigeria (36 states + FCT) and Kenya (47 counties). Geo suggests the corpus pack, and never decides language.                                                         |
-| Location precedence | Explicit location in the claim, then user selection, then cookie, then Vercel region, then national.                                                                 |
-| UI                  | English only, browser-translatable. Answer content in the detected language.                                                                                         |
-| Language            | Any input is detected, translated into an English query for search, and answered in the original language. Fallback is English.                                      |
-| Model               | OpenRouter with an ordered fallback chain: `deepseek/deepseek-v4.1-flash`, then `deepseek/deepseek-v4-flash`.                                                        |
-| Privacy invariants  | Hardcoded `zdr: true`, `data_collection: "deny"`, `require_parameters: true`. Fail closed.                                                                           |
-| Retrieval           | Postgres FTS and `pg_trgm` with deterministic scoring. No aliases, no fact cards, no LLM reranker.                                                                   |
-| Pipeline            | Two model calls, Zod validation on both, one retry, deterministic fallback.                                                                                          |
-| Sourcing            | Ingestion pipeline only. The runtime never touches the web.                                                                                                          |
-| IP handling         | `HMAC-SHA256(IP_HASH_SECRET, ip)` for rate limiting only. The `locale_hints` table was removed before deployment because language preference storage was not needed. |
-| Retention           | All inputs are kept indefinitely, de-identified and unlinked.                                                                                                        |
-| Delivery            | Responsive website. Offline, PWA, SMS, and USSD are documented as future directions.                                                                                 |
+| Area                | Decision                                                                                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Regions             | Nigeria (36 states + FCT) and Kenya (47 counties). Geo suggests the corpus pack, and never decides language.                                                     |
+| Location precedence | Explicit location in the claim, then user selection, then cookie, then Vercel region, then national.                                                             |
+| UI                  | English only, browser-translatable. Answer content in the detected language.                                                                                     |
+| Language            | Any input is detected, translated into an English query for search, and answered in the original language. Fallback is English.                                  |
+| Model               | OpenRouter with an ordered fallback chain: `deepseek/deepseek-v4.1-flash`, then `deepseek/deepseek-v4-flash`.                                                    |
+| Privacy invariants  | Hardcoded `zdr: true`, `data_collection: "deny"`, `require_parameters: true`. Fail closed.                                                                       |
+| Retrieval           | Postgres FTS and `pg_trgm` with deterministic scoring. No aliases, no fact cards, no LLM reranker.                                                               |
+| Pipeline            | Two model calls, Zod validation on both, one retry, deterministic fallback.                                                                                      |
+| Sourcing            | Ingestion pipeline only. The runtime never touches the web.                                                                                                      |
+| IP handling         | `HMAC-SHA256(APP_SECRET, ip)` for rate limiting only. The `locale_hints` table was removed before deployment because language preference storage was not needed. |
+| Retention           | All inputs are kept indefinitely, de-identified and unlinked.                                                                                                    |
+| Delivery            | Responsive website. Offline, PWA, SMS, and USSD are documented as future directions.                                                                             |
 
 ## Retention tradeoff
 
