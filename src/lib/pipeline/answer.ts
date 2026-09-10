@@ -11,7 +11,11 @@ import {
 import { corpusNewest } from "@/lib/retrieval/corpus";
 import { searchEvidence, type RetrievedChunk } from "@/lib/retrieval/search";
 import { categoriesForClaimType, referralsFor } from "@/lib/referrals/lookup";
-import { assessEvidence, type EvidenceAssessment } from "@/lib/trust/freshness";
+import {
+  assessEvidence,
+  capForUnmatchedLocation,
+  type EvidenceAssessment,
+} from "@/lib/trust/freshness";
 import type { AnswerPayload, AnswerStatus } from "@/lib/trust/types";
 import { clusterKeyFor, recordVerificationDemand } from "./events";
 import { extractClaim } from "./extract";
@@ -141,15 +145,19 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     limit: 8,
   });
   const newest = await corpusNewest(location.country);
-  const assessment = assessEvidence(
-    extraction.claim_type,
-    evidence.map((item) => ({
-      tier: item.tier,
-      publisher: item.publisher,
-      publishedAt: item.publishedAt,
-      fetchedAt: item.fetchedAt,
-    })),
-    newest,
+  const assessment = capForUnmatchedLocation(
+    assessEvidence(
+      extraction.claim_type,
+      evidence.map((item) => ({
+        tier: item.tier,
+        publisher: item.publisher,
+        publishedAt: item.publishedAt,
+        fetchedAt: item.fetchedAt,
+      })),
+      newest,
+    ),
+    extraction.location_hints,
+    evidence.map((item) => ({ title: item.title, content: item.content })),
   );
 
   const referralRows = await referralsFor(

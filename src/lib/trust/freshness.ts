@@ -82,7 +82,7 @@ export function assessEvidence(
     return {
       status: "unverified",
       reason:
-        "No supporting or contradicting source was found in the current corpus. This is not confirmation — do not treat it as true or false.",
+        "No supporting or contradicting source was found in the current corpus. The claim is neither confirmed nor denied.",
       windowMs,
       newestEvidenceAt: null,
       stale: false,
@@ -133,4 +133,37 @@ export function describeAge(ms: number): string {
   if (ms < HOUR_MS) return `${Math.max(1, Math.round(ms / 60_000))} minutes`;
   if (ms < DAY_MS) return `${Math.round(ms / HOUR_MS)} hours`;
   return `${Math.round(ms / DAY_MS)} days`;
+}
+
+/**
+ * National evidence should not verify a claim about a specific place that no
+ * source mentions. When the claim names places and none of the retrieved
+ * evidence mentions any of them, a verified verdict stops at developing.
+ */
+export function capForUnmatchedLocation(
+  assessment: EvidenceAssessment,
+  locationHints: string[],
+  evidence: { title: string; content: string }[],
+): EvidenceAssessment {
+  if (assessment.status !== "verified" || locationHints.length === 0) {
+    return assessment;
+  }
+
+  const haystacks = evidence.map((item) =>
+    `${item.title}\n${item.content}`.toLowerCase(),
+  );
+  const matched = locationHints.some((hint) => {
+    const needle = hint.trim().toLowerCase();
+    return (
+      needle.length >= 3 && haystacks.some((text) => text.includes(needle))
+    );
+  });
+  if (matched) return assessment;
+
+  return {
+    ...assessment,
+    status: "developing",
+    reason:
+      "The evidence covers the topic but does not mention the place named in the claim, so the verdict stops at developing.",
+  };
 }
