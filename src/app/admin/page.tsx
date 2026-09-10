@@ -8,7 +8,7 @@ import { AdminLogin } from "./admin-login";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Review console — Amana Check",
+  title: "Review console: Amana Check",
   robots: { index: false },
 };
 

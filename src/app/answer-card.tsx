@@ -24,12 +24,12 @@ const STATUS_META: Record<
   unverified: {
     label: "Not verified",
     description:
-      "No supporting or contradicting source was found. This is not a confirmation either way.",
+      "No supporting or contradicting source was found. The claim is neither confirmed nor denied.",
     className:
       "border-zinc-300 bg-zinc-50 text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200",
   },
   not_confirmed_stale: {
-    label: "Not confirmed — evidence too old",
+    label: "Not confirmed: evidence too old",
     description:
       "Our sources are older than the freshness window for this kind of claim. Do not read this as safe.",
     className:
@@ -66,7 +66,7 @@ function buildShareText(payload: AnswerPayload): string {
     new Set(payload.evidence.map((item) => item.publisher)),
   );
   return [
-    "AMANA CHECK — check before you share",
+    "AMANA CHECK: check before you share",
     `Claim: ${payload.claim}`,
     `Status: ${meta.label}`,
     ...payload.whatWeKnow.map((bullet) => `- ${stripCitations(bullet)}`),
@@ -225,7 +225,7 @@ export function AnswerCard({
                   </p>
                   {item.excerpt ? (
                     <p className="text-sm text-zinc-500 italic dark:text-zinc-500">
-                      “{item.excerpt}”
+                      &quot;{item.excerpt}&quot;
                     </p>
                   ) : null}
                   <a

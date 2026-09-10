@@ -125,7 +125,9 @@ export function CheckForm() {
           onChange={(event) => setText(event.target.value)}
           rows={4}
           maxLength={4000}
-          placeholder="Any language works. For example: “Dem talk say FG dey give N75,000, na true?”"
+          placeholder={
+            'Any language works. For example: "Dem talk say FG dey give N75,000, na true?"'
+          }
           className="w-full resize-y rounded-xl border border-zinc-300 bg-white px-4 py-3 text-base text-zinc-900 outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:focus:border-zinc-300"
         />
         <div className="flex flex-wrap items-center gap-3">

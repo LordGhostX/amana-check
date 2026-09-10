@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "How Amana Check decides — Amana Check",
+  title: "How Amana Check decides",
   description:
     "Sources, tiers, freshness windows, statuses, and privacy rules behind Amana Check.",
 };
@@ -11,7 +11,7 @@ const SOURCE_TIERS = [
   [
     "T1",
     "Official primary",
-    "NCDC, NEMA, Nigeria Police, INEC, Kenya Ministry of Health, National Police Service, NDMA, IEBC, Kenya Met",
+    "NCDC, NEMA, INEC, Kenya Ministry of Health, National Police Service, NDMA, IEBC, Kenya Met, Kenya News Agency",
   ],
   [
     "T2",
@@ -32,14 +32,14 @@ const STATUSES = [
   ],
   [
     "Developing",
-    "Some relevant evidence exists, but it does not yet meet the independence or source requirements.",
+    "Some relevant evidence exists, but it does not yet meet the independence or source requirements. This is also where a verdict lands when the claim names a place that no source mentions.",
   ],
   [
     "Not verified",
-    "The corpus is fresh but no supporting or contradicting source was found. This is not confirmation either way.",
+    "The corpus is fresh but no supporting or contradicting source was found. The claim is neither confirmed nor denied.",
   ],
   [
-    "Not confirmed — evidence too old",
+    "Not confirmed: evidence too old",
     "The most recent relevant evidence is older than the freshness window. Amana explicitly warns against reading this as safety.",
   ],
   [
@@ -85,8 +85,8 @@ export default function MethodologyPage() {
         </h1>
         <p className="text-base leading-7 text-zinc-600 dark:text-zinc-400">
           Amana Check does not decide what is true. It reports what its ingested
-          sources say, when they said it, and how strong that evidence is — and
-          it refuses to answer when the evidence is missing or stale.
+          sources say, when they said it, and how strong that evidence is. It
+          refuses to answer when the evidence is missing or stale.
         </p>
       </header>
 

@@ -42,8 +42,8 @@ export default async function Home() {
         </h1>
         <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
           Paste a rumor, forwarded message, or question in any language. Amana
-          answers with what is actually known — sourced, dated, and actionable —
-          and says plainly when it cannot tell.
+          answers with what is actually known, shows where each fact came from
+          and when it was checked, and says plainly when it cannot tell.
         </p>
       </header>
 
@@ -55,13 +55,13 @@ export default async function Home() {
         </h2>
         <ul className="flex flex-col gap-2 text-zinc-600 dark:text-zinc-400">
           <li>
-            Sources are tiered: official primary, then independent fact-checkers
-            and humanitarian organisations, then credible media.
+            Sources are tiered: official primaries first, then independent
+            fact-checkers and humanitarian organisations, then credible media.
           </li>
           <li>
             Every answer lists its evidence and when it was last checked.
-            &ldquo;Unknown&rdquo; is a valid answer, and absence of evidence is
-            never treated as proof of safety.
+            &quot;Unknown&quot; is a valid answer, and a missing source is never
+            treated as proof of safety.
           </li>
           <li>
             When sources are older than the freshness window for that kind of

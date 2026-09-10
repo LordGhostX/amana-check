@@ -6,7 +6,7 @@ import { referrals } from "@/lib/db/schema";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Get help — Amana Check",
+  title: "Get help: Amana Check",
   description:
     "Verified and clearly-labelled contact pathways for Nigeria and Kenya.",
 };
@@ -86,7 +86,7 @@ export default async function HelpPage() {
                         </span>
                       ) : (
                         <span className="text-xs text-amber-700 dark:text-amber-400">
-                          Not yet independently verified — confirm locally
+                          Not yet independently verified; confirm locally
                         </span>
                       )}
                     </div>
