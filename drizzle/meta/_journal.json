@@ -57,6 +57,13 @@
       "when": 1789064061365,
       "tag": "0007_drop_locale_hints",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789069272951,
+      "tag": "0008_drop_feedback_columns",
+      "breakpoints": true
     }
   ]
 }

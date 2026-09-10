@@ -11,7 +11,6 @@ export const dynamic = "force-dynamic";
 const bodySchema = z.object({
   answerId: z.number().int().positive(),
   rating: z.enum(["helpful", "not_helpful", "wrong"]),
-  comment: z.string().trim().max(1000).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -40,7 +39,6 @@ export async function POST(request: NextRequest) {
     await db.insert(feedback).values({
       answerId: parsed.data.answerId,
       rating: parsed.data.rating,
-      comment: parsed.data.comment ?? null,
     });
     return NextResponse.json({ ok: true });
   } catch (error) {

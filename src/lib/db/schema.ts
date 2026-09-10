@@ -290,9 +290,7 @@ export const feedback = pgTable("feedback", {
   answerId: integer("answer_id").references(() => answers.id, {
     onDelete: "set null",
   }),
-  claimHash: text("claim_hash"),
   rating: text("rating"),
-  comment: text("comment"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
