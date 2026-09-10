@@ -30,6 +30,15 @@ These are deliberately out of the proof-of-concept scope, with enough design det
 - **Source dispute process.** A published pathway for publishers to challenge how their material was used, with review and versioned outcomes.
 - **Verification partnerships.** Local fact-checkers and peacebuilding organisations could contribute verification through the review console, with attribution stored on versions.
 
+## Referral verification backlog
+
+The following pathways are valuable but were not publishable during the build because their official pages were unreachable or did not list a number. Verify them before adding, and re-check every seeded referral on a rolling cadence.
+
+- NAPTIP trafficking hotline (Nigeria) — the official site timed out repeatedly during verification.
+- Kenya national GBV hotline 1195 — not listed on the State Department for Gender homepage; confirm with the ministry or a designated service provider.
+- Kenya Ministry of Health public hotline 719 — not confirmed from an official page.
+- Rolling re-verification: check every seeded referral quarterly and update `verifiedAt`, or clear the date so the interface stops presenting it as verified.
+
 ## Expansion and operations
 
 - **New geographies.** The region, source, and referral packs are country-scoped. Sahel (Mali, Burkina Faso, Niger), DRC, Mozambique, and Sudan are the natural next packs given OSF's Transformative Peace focus.

@@ -232,6 +232,7 @@ export const referrals = pgTable(
   "referrals",
   {
     id: serial("id").primaryKey(),
+    slug: text("slug").notNull(),
     country: text("country").notNull(),
     regionCode: text("region_code"),
     category: text("category").notNull(),
@@ -242,6 +243,7 @@ export const referrals = pgTable(
     verifiedAt: timestamp("verified_at", { withTimezone: true }),
   },
   (t) => [
+    uniqueIndex("referrals_slug_idx").on(t.slug),
     index("referrals_country_idx").on(t.country),
     index("referrals_category_idx").on(t.category),
   ],

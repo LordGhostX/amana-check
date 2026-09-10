@@ -2,33 +2,33 @@
   "country": "KE",
   "referrals": [
     {
-      "country": "KE",
+      "slug": "ke-emergency",
       "regionCode": null,
       "category": "emergency",
-      "name": "National emergency line",
-      "phone": "999 or 112",
-      "description": "Toll-free national emergency number for police, fire, and ambulance response.",
-      "url": "https://www.nationalpolice.go.ke/",
-      "verifiedAt": null
+      "name": "National Police Service hotline",
+      "phone": "999 / 112 / 911",
+      "description": "Police emergency hotline listed by the National Police Service.",
+      "url": "https://nationalpolice.go.ke/",
+      "verifiedAt": "2026-09-10"
     },
     {
-      "country": "KE",
+      "slug": "ke-childline",
       "regionCode": null,
       "category": "child",
       "name": "Childline Kenya",
       "phone": "116",
-      "description": "24-hour toll-free child helpline for abuse reporting, counselling, and referral to child protection services.",
+      "description": "24-hour toll-free child helpline for abuse reporting, counselling, and referral. WhatsApp +254 722 116 116 is also listed by Childline Kenya.",
       "url": "https://childlinekenya.co.ke/",
       "verifiedAt": "2026-09-10"
     },
     {
-      "country": "KE",
+      "slug": "ke-redcross",
       "regionCode": null,
       "category": "humanitarian",
       "name": "Kenya Red Cross",
-      "phone": "+254 703 037 000",
+      "phone": "1199 (toll-free) or +254 703 037 000",
       "description": "Humanitarian relief, disaster response, ambulance, and tracing services.",
-      "url": "https://redcross.or.ke/",
+      "url": "https://redcross.or.ke/contact-us/",
       "verifiedAt": "2026-09-10"
     }
   ]

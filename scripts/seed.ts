@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { notInArray, sql } from "drizzle-orm";
 import { db, pgClient } from "@/lib/db";
 import { referrals, regions, sources } from "@/lib/db/schema";
 import {
@@ -14,8 +14,7 @@ async function main() {
   let regionTotal = 0;
   let sourceTotal = 0;
   let referralTotal = 0;
-
-  await db.delete(referrals);
+  const seededSlugs: string[] = [];
 
   for (const slug of SLUGS) {
     const regionFile = loadRegionFile(slug);
@@ -78,7 +77,8 @@ async function main() {
 
     const referralFile = loadReferralFile(slug);
     const referralRows = referralFile.referrals.map((referral) => ({
-      country: referral.country,
+      slug: referral.slug,
+      country: referralFile.country,
       regionCode: referral.regionCode ?? null,
       category: referral.category,
       name: referral.name,
@@ -88,13 +88,39 @@ async function main() {
       verifiedAt: referral.verifiedAt ? new Date(referral.verifiedAt) : null,
     }));
     if (referralRows.length > 0) {
-      await db.insert(referrals).values(referralRows);
+      await db
+        .insert(referrals)
+        .values(referralRows)
+        .onConflictDoUpdate({
+          target: referrals.slug,
+          set: {
+            country: sql`excluded.country`,
+            regionCode: sql`excluded.region_code`,
+            category: sql`excluded.category`,
+            name: sql`excluded.name`,
+            phone: sql`excluded.phone`,
+            description: sql`excluded.description`,
+            url: sql`excluded.url`,
+            verifiedAt: sql`excluded.verified_at`,
+          },
+        });
+      seededSlugs.push(...referralRows.map((row) => row.slug));
     }
     referralTotal += referralRows.length;
 
     console.log(
       `${regionFile.name}: ${regionRows.length} regions, ${sourceRows.length} sources, ${referralRows.length} referrals`,
     );
+  }
+
+  if (seededSlugs.length > 0) {
+    const pruned = await db
+      .delete(referrals)
+      .where(notInArray(referrals.slug, seededSlugs))
+      .returning({ slug: referrals.slug });
+    if (pruned.length > 0) {
+      console.log(`Pruned ${pruned.length} referral(s) not in the seed files.`);
+    }
   }
 
   console.log(

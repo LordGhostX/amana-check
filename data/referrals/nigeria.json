@@ -2,22 +2,32 @@
   "country": "NG",
   "referrals": [
     {
-      "country": "NG",
+      "slug": "ng-emergency",
       "regionCode": null,
       "category": "emergency",
-      "name": "National emergency line",
+      "name": "Nigeria Police emergency line",
       "phone": "112",
-      "description": "Toll-free national emergency number for police, fire, and ambulance response.",
-      "url": "https://nema.gov.ng/",
-      "verifiedAt": null
+      "description": "National emergency response for police, fire, and ambulance. Listed by the Nigeria Police Force.",
+      "url": "https://www.npf.gov.ng/call-us",
+      "verifiedAt": "2026-09-10"
     },
     {
-      "country": "NG",
+      "slug": "ng-police-whatsapp",
+      "regionCode": null,
+      "category": "emergency",
+      "name": "Nigeria Police WhatsApp reporting",
+      "phone": "08057000003",
+      "description": "Report a crime or urgent concern to the Nigeria Police Force on WhatsApp.",
+      "url": "https://www.npf.gov.ng/call-us",
+      "verifiedAt": "2026-09-10"
+    },
+    {
+      "slug": "ng-ncdc",
       "regionCode": null,
       "category": "health",
       "name": "NCDC toll-free call centre",
       "phone": "6232",
-      "description": "Nigeria Centre for Disease Control and Prevention: disease reporting, outbreak guidance, and public health alerts.",
+      "description": "Nigeria Centre for Disease Control and Prevention: disease reporting and outbreak guidance. SMS 0809 955 5577 and WhatsApp 0708 711 0839 are also listed on the NCDC contact page.",
       "url": "https://ncdc.gov.ng/contact",
       "verifiedAt": "2026-09-10"
     }

@@ -79,6 +79,10 @@ Outcomes are `verified`, `developing`, `unverified`, `not_confirmed_stale`, and 
 - A daily cost guard stops the ask endpoint with a 503 once `DAILY_COST_LIMIT_USD` is reached.
 - Every model call is logged in `llm_calls` with tokens, model, cost, and success, without prompt or completion content.
 
+## Referral contacts
+
+Contact pathways are added only when a number appears on the organisation's own official page. The `verifiedAt` date records the day that page was last checked, and the interface labels anything without a date as "not yet independently verified — confirm locally". The model never invents contacts and receives only the seeded pathways relevant to the claim type. Publishing unverified numbers is deliberately avoided; the outstanding verification tasks are tracked in [future-directions.md](future-directions.md).
+
 ## Reproducing
 
 ```bash

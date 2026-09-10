@@ -40,7 +40,11 @@ export type SourceFile = z.infer<typeof sourceFileSchema>;
 export type RegionFile = z.infer<typeof regionFileSchema>;
 
 export const referralEntrySchema = z.object({
-  country: z.string().length(2),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9-]+$/, "slug must be kebab-case")
+    .min(3)
+    .max(60),
   regionCode: z.string().nullable().optional(),
   category: z.enum([
     "emergency",
