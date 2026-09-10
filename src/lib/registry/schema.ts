@@ -9,7 +9,7 @@ export const sourceEntrySchema = z.object({
   scope: z.array(z.string().min(1)).min(1),
   fetch: z.object({
     kind: z.enum(FETCH_KINDS),
-    url: z.string().url(),
+    url: z.url(),
     list_selector: z.string().optional(),
     link_pattern: z.string().optional(),
     content_selector: z.string().optional(),
@@ -65,7 +65,7 @@ export const referralEntrySchema = z.object({
   name: z.string().min(1),
   phone: z.string().min(3),
   description: z.string().optional(),
-  url: z.string().url().optional(),
+  url: z.url().optional(),
   verifiedAt: z.string().nullable().optional(),
 });
 

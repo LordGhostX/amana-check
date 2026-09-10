@@ -2,7 +2,7 @@ import type { ChatMessage } from "@/lib/llm/client";
 import type { AnswerStatus } from "@/lib/trust/types";
 
 export const PROMPT_VERSIONS = {
-  extract: "extract-v2",
+  extract: "extract-v1",
   synthesize: "synthesize-v1",
 } as const;
 
