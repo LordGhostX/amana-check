@@ -11,10 +11,10 @@ jobs:
       DATABASE_URL: postgresql://localhost:5432/amana_check
       IP_HASH_SECRET: ci-placeholder-secret
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.0
       - run: bun install --frozen-lockfile
       - run: bun run format:check
       - run: bun run typecheck
