@@ -105,7 +105,10 @@ export function assessEvidence(
     evidence.filter((item) => item.tier === 2).map((item) => item.publisher),
   ).size;
 
-  if (tier1Count >= requirement.minTier1 || tier2Publishers >= requirement.minTier2) {
+  if (
+    tier1Count >= requirement.minTier1 ||
+    tier2Publishers >= requirement.minTier2
+  ) {
     return {
       status: "verified",
       reason:

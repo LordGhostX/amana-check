@@ -28,7 +28,10 @@ function splitLongParagraph(paragraph: string, target: number): string[] {
   return pieces;
 }
 
-export function chunkText(text: string, options: ChunkOptions = {}): TextChunk[] {
+export function chunkText(
+  text: string,
+  options: ChunkOptions = {},
+): TextChunk[] {
   const target = options.targetChars ?? 900;
   const overlap = options.overlapChars ?? 150;
   const maxChunks = options.maxChunks ?? 40;

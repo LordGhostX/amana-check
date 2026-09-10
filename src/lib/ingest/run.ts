@@ -179,7 +179,9 @@ export async function ingestSources(
       }
       const rawItems = await fetchFeed(source.url);
       if (rawItems.length === 0) {
-        throw new Error("feed returned no items — likely not RSS (check the URL)");
+        throw new Error(
+          "feed returned no items — likely not RSS (check the URL)",
+        );
       }
 
       const cleaned = rawItems.map((item) => ({

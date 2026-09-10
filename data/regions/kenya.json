@@ -3,52 +3,222 @@
   "name": "Kenya",
   "regions": [
     { "code": "KE", "level": "country", "name": "Kenya", "parentCode": null },
-    { "code": "KE-01", "level": "county", "name": "Mombasa", "parentCode": "KE" },
+    {
+      "code": "KE-01",
+      "level": "county",
+      "name": "Mombasa",
+      "parentCode": "KE"
+    },
     { "code": "KE-02", "level": "county", "name": "Kwale", "parentCode": "KE" },
-    { "code": "KE-03", "level": "county", "name": "Kilifi", "parentCode": "KE" },
-    { "code": "KE-04", "level": "county", "name": "Tana River", "parentCode": "KE" },
+    {
+      "code": "KE-03",
+      "level": "county",
+      "name": "Kilifi",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-04",
+      "level": "county",
+      "name": "Tana River",
+      "parentCode": "KE"
+    },
     { "code": "KE-05", "level": "county", "name": "Lamu", "parentCode": "KE" },
-    { "code": "KE-06", "level": "county", "name": "Taita-Taveta", "parentCode": "KE" },
-    { "code": "KE-07", "level": "county", "name": "Garissa", "parentCode": "KE" },
+    {
+      "code": "KE-06",
+      "level": "county",
+      "name": "Taita-Taveta",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-07",
+      "level": "county",
+      "name": "Garissa",
+      "parentCode": "KE"
+    },
     { "code": "KE-08", "level": "county", "name": "Wajir", "parentCode": "KE" },
-    { "code": "KE-09", "level": "county", "name": "Mandera", "parentCode": "KE" },
-    { "code": "KE-10", "level": "county", "name": "Marsabit", "parentCode": "KE" },
-    { "code": "KE-11", "level": "county", "name": "Isiolo", "parentCode": "KE" },
+    {
+      "code": "KE-09",
+      "level": "county",
+      "name": "Mandera",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-10",
+      "level": "county",
+      "name": "Marsabit",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-11",
+      "level": "county",
+      "name": "Isiolo",
+      "parentCode": "KE"
+    },
     { "code": "KE-12", "level": "county", "name": "Meru", "parentCode": "KE" },
-    { "code": "KE-13", "level": "county", "name": "Tharaka-Nithi", "parentCode": "KE" },
+    {
+      "code": "KE-13",
+      "level": "county",
+      "name": "Tharaka-Nithi",
+      "parentCode": "KE"
+    },
     { "code": "KE-14", "level": "county", "name": "Embu", "parentCode": "KE" },
     { "code": "KE-15", "level": "county", "name": "Kitui", "parentCode": "KE" },
-    { "code": "KE-16", "level": "county", "name": "Machakos", "parentCode": "KE" },
-    { "code": "KE-17", "level": "county", "name": "Makueni", "parentCode": "KE" },
-    { "code": "KE-18", "level": "county", "name": "Nyandarua", "parentCode": "KE" },
+    {
+      "code": "KE-16",
+      "level": "county",
+      "name": "Machakos",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-17",
+      "level": "county",
+      "name": "Makueni",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-18",
+      "level": "county",
+      "name": "Nyandarua",
+      "parentCode": "KE"
+    },
     { "code": "KE-19", "level": "county", "name": "Nyeri", "parentCode": "KE" },
-    { "code": "KE-20", "level": "county", "name": "Kirinyaga", "parentCode": "KE" },
-    { "code": "KE-21", "level": "county", "name": "Murang'a", "parentCode": "KE" },
-    { "code": "KE-22", "level": "county", "name": "Kiambu", "parentCode": "KE" },
-    { "code": "KE-23", "level": "county", "name": "Turkana", "parentCode": "KE" },
-    { "code": "KE-24", "level": "county", "name": "West Pokot", "parentCode": "KE" },
-    { "code": "KE-25", "level": "county", "name": "Samburu", "parentCode": "KE" },
-    { "code": "KE-26", "level": "county", "name": "Trans Nzoia", "parentCode": "KE" },
-    { "code": "KE-27", "level": "county", "name": "Uasin Gishu", "parentCode": "KE" },
-    { "code": "KE-28", "level": "county", "name": "Elgeyo-Marakwet", "parentCode": "KE" },
+    {
+      "code": "KE-20",
+      "level": "county",
+      "name": "Kirinyaga",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-21",
+      "level": "county",
+      "name": "Murang'a",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-22",
+      "level": "county",
+      "name": "Kiambu",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-23",
+      "level": "county",
+      "name": "Turkana",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-24",
+      "level": "county",
+      "name": "West Pokot",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-25",
+      "level": "county",
+      "name": "Samburu",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-26",
+      "level": "county",
+      "name": "Trans Nzoia",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-27",
+      "level": "county",
+      "name": "Uasin Gishu",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-28",
+      "level": "county",
+      "name": "Elgeyo-Marakwet",
+      "parentCode": "KE"
+    },
     { "code": "KE-29", "level": "county", "name": "Nandi", "parentCode": "KE" },
-    { "code": "KE-30", "level": "county", "name": "Baringo", "parentCode": "KE" },
-    { "code": "KE-31", "level": "county", "name": "Laikipia", "parentCode": "KE" },
-    { "code": "KE-32", "level": "county", "name": "Nakuru", "parentCode": "KE" },
+    {
+      "code": "KE-30",
+      "level": "county",
+      "name": "Baringo",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-31",
+      "level": "county",
+      "name": "Laikipia",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-32",
+      "level": "county",
+      "name": "Nakuru",
+      "parentCode": "KE"
+    },
     { "code": "KE-33", "level": "county", "name": "Narok", "parentCode": "KE" },
-    { "code": "KE-34", "level": "county", "name": "Kajiado", "parentCode": "KE" },
-    { "code": "KE-35", "level": "county", "name": "Kericho", "parentCode": "KE" },
+    {
+      "code": "KE-34",
+      "level": "county",
+      "name": "Kajiado",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-35",
+      "level": "county",
+      "name": "Kericho",
+      "parentCode": "KE"
+    },
     { "code": "KE-36", "level": "county", "name": "Bomet", "parentCode": "KE" },
-    { "code": "KE-37", "level": "county", "name": "Kakamega", "parentCode": "KE" },
-    { "code": "KE-38", "level": "county", "name": "Vihiga", "parentCode": "KE" },
-    { "code": "KE-39", "level": "county", "name": "Bungoma", "parentCode": "KE" },
+    {
+      "code": "KE-37",
+      "level": "county",
+      "name": "Kakamega",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-38",
+      "level": "county",
+      "name": "Vihiga",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-39",
+      "level": "county",
+      "name": "Bungoma",
+      "parentCode": "KE"
+    },
     { "code": "KE-40", "level": "county", "name": "Busia", "parentCode": "KE" },
     { "code": "KE-41", "level": "county", "name": "Siaya", "parentCode": "KE" },
-    { "code": "KE-42", "level": "county", "name": "Kisumu", "parentCode": "KE" },
-    { "code": "KE-43", "level": "county", "name": "Homa Bay", "parentCode": "KE" },
-    { "code": "KE-44", "level": "county", "name": "Migori", "parentCode": "KE" },
+    {
+      "code": "KE-42",
+      "level": "county",
+      "name": "Kisumu",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-43",
+      "level": "county",
+      "name": "Homa Bay",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-44",
+      "level": "county",
+      "name": "Migori",
+      "parentCode": "KE"
+    },
     { "code": "KE-45", "level": "county", "name": "Kisii", "parentCode": "KE" },
-    { "code": "KE-46", "level": "county", "name": "Nyamira", "parentCode": "KE" },
-    { "code": "KE-47", "level": "county", "name": "Nairobi", "parentCode": "KE" }
+    {
+      "code": "KE-46",
+      "level": "county",
+      "name": "Nyamira",
+      "parentCode": "KE"
+    },
+    {
+      "code": "KE-47",
+      "level": "county",
+      "name": "Nairobi",
+      "parentCode": "KE"
+    }
   ]
 }

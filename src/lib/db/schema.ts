@@ -53,7 +53,10 @@ export const sources = pgTable(
     url: text("url").notNull(),
     license: text("license"),
     refreshInterval: text("refresh_interval"),
-    includeKeywords: jsonb("include_keywords").$type<string[]>().notNull().default([]),
+    includeKeywords: jsonb("include_keywords")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
     enabled: boolean("enabled").notNull().default(true),
     lastFetchAt: timestamp("last_fetch_at", { withTimezone: true }),
     lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),

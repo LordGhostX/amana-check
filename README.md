@@ -34,19 +34,21 @@ Generate `IP_HASH_SECRET` with `openssl rand -hex 32`.
 
 ## Scripts
 
-| Command | What it does |
-| --- | --- |
-| `bun run dev` | Start the app |
-| `bun run build` | Production build |
-| `bun run typecheck` | `tsc --noEmit` |
-| `bun run lint` | ESLint |
-| `bun run db:generate` | Generate Drizzle migrations from the schema |
-| `bun run db:migrate` | Apply migrations |
-| `bun run db:seed` | Load region registries and sources from `data/` |
-| `bun run db:studio` | Drizzle Studio |
-| `bun run ingest` | Fetch enabled sources into the corpus (flags: `--source`, `--country`, `--limit`) |
-| `bun run check:llm` | Verify the fail-closed OpenRouter path |
-| `bun run check:pipeline` | Run extraction → retrieval → freshness gate on a sample claim |
+| Command                  | What it does                                                                      |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| `bun run dev`            | Start the app                                                                     |
+| `bun run build`          | Production build                                                                  |
+| `bun run typecheck`      | `tsc --noEmit`                                                                    |
+| `bun run lint`           | ESLint                                                                            |
+| `bun run format`         | Format with Prettier                                                              |
+| `bun run format:check`   | Verify formatting with Prettier                                                   |
+| `bun run db:generate`    | Generate Drizzle migrations from the schema                                       |
+| `bun run db:migrate`     | Apply migrations                                                                  |
+| `bun run db:seed`        | Load region registries and sources from `data/`                                   |
+| `bun run db:studio`      | Drizzle Studio                                                                    |
+| `bun run ingest`         | Fetch enabled sources into the corpus (flags: `--source`, `--country`, `--limit`) |
+| `bun run check:llm`      | Verify the fail-closed OpenRouter path                                            |
+| `bun run check:pipeline` | Run extraction → retrieval → freshness gate on a sample claim                     |
 
 ## Layout
 

@@ -8,20 +8,20 @@ A community-facing trust layer for fragile information environments. A rumor or 
 
 ## Decision ledger
 
-| Area | Decision |
-| --- | --- |
-| Regions | Nigeria (36 states + FCT) and Kenya (47 counties); geo **suggests** the corpus pack |
-| Location precedence | explicit location in claim > user-selected > cookie > Vercel region > national |
-| UI | English only, browser-translatable; answer content in the detected language |
-| Language | any input → detect → translate to English for search → answer back; fallback English |
-| Model | OpenRouter with an ordered fallback chain, default `deepseek/deepseek-v4.1-flash` → `deepseek/deepseek-v4-flash` |
-| Privacy invariants | hardcoded `zdr: true`, `data_collection: "deny"`, `require_parameters: true`; **fail closed** |
-| Retrieval | Postgres FTS + `pg_trgm` + deterministic scoring; no aliases, no fact cards, no LLM reranker |
-| Pipeline | two model calls, Zod validation on both, retry once, deterministic safe fallback |
-| Sourcing | ingestion pipeline only; runtime never touches the web |
-| IP handling | `HMAC-SHA256(IP_HASH_SECRET, ip)`; `locale_hints` (30d TTL) + `rate_limits` (short TTL), both isolated |
-| Retention | all inputs persisted indefinitely, de-identified and unlinked |
-| Delivery | responsive website; offline/PWA/SMS/USSD documented as future direction |
+| Area                | Decision                                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Regions             | Nigeria (36 states + FCT) and Kenya (47 counties); geo **suggests** the corpus pack                              |
+| Location precedence | explicit location in claim > user-selected > cookie > Vercel region > national                                   |
+| UI                  | English only, browser-translatable; answer content in the detected language                                      |
+| Language            | any input → detect → translate to English for search → answer back; fallback English                             |
+| Model               | OpenRouter with an ordered fallback chain, default `deepseek/deepseek-v4.1-flash` → `deepseek/deepseek-v4-flash` |
+| Privacy invariants  | hardcoded `zdr: true`, `data_collection: "deny"`, `require_parameters: true`; **fail closed**                    |
+| Retrieval           | Postgres FTS + `pg_trgm` + deterministic scoring; no aliases, no fact cards, no LLM reranker                     |
+| Pipeline            | two model calls, Zod validation on both, retry once, deterministic safe fallback                                 |
+| Sourcing            | ingestion pipeline only; runtime never touches the web                                                           |
+| IP handling         | `HMAC-SHA256(IP_HASH_SECRET, ip)`; `locale_hints` (30d TTL) + `rate_limits` (short TTL), both isolated           |
+| Retention           | all inputs persisted indefinitely, de-identified and unlinked                                                    |
+| Delivery            | responsive website; offline/PWA/SMS/USSD documented as future direction                                          |
 
 ## Retention tradeoff (deliberate)
 
@@ -40,7 +40,11 @@ Every OpenRouter call sends:
 ```json
 {
   "models": ["deepseek/deepseek-v4.1-flash", "deepseek/deepseek-v4-flash"],
-  "provider": { "zdr": true, "data_collection": "deny", "require_parameters": true },
+  "provider": {
+    "zdr": true,
+    "data_collection": "deny",
+    "require_parameters": true
+  },
   "response_format": { "type": "json_object" }
 }
 ```
@@ -49,14 +53,14 @@ Zod pipeline on every response: `JSON.parse → Zod → semantic checks → acce
 
 ## Freshness gate
 
-| Claim type | Window | Definitive verdict requires |
-| --- | --- | --- |
-| Security incident | 2h | 1×T1 or 2× independent T2 |
-| Flood / weather | 6h | 1×T1 |
-| Health outbreak | 24h | 1×T1 or 2×T2 |
-| Payment / service scam | 72h | 1×T1 or 1×T2 |
-| Civic process / deadlines | 7d | 1×T1 |
-| Reference (rights, documents) | 30d | 1×T1/T2 |
+| Claim type                    | Window | Definitive verdict requires |
+| ----------------------------- | ------ | --------------------------- |
+| Security incident             | 2h     | 1×T1 or 2× independent T2   |
+| Flood / weather               | 6h     | 1×T1                        |
+| Health outbreak               | 24h    | 1×T1 or 2×T2                |
+| Payment / service scam        | 72h    | 1×T1 or 1×T2                |
+| Civic process / deadlines     | 7d     | 1×T1                        |
+| Reference (rights, documents) | 30d    | 1×T1/T2                     |
 
 Outcomes: **Verified** · **Developing** · **Unverified** (fresh corpus, no supporting evidence — not true, not false, with local verification steps) · **Not confirmed — evidence too old** ("do not interpret this as safe") · **Unknown coverage**. Database silence is never turned into reassurance.
 
@@ -83,14 +87,14 @@ client-side and never sent to the server.
 
 ## Phases
 
-| Phase | Scope | Done when |
-| --- | --- | --- |
-| 1. Foundation | Scaffold, Postgres + Drizzle migrations, source registries, `hashIp()`, fail-closed LLM client | Migrations apply; registry seeds; fail-closed path tested |
-| 2. Trust Engine | Ingestion adapters, chunks + FTS + pg_trgm, Call 1 + Zod, deterministic scoring, freshness gate, Call 2 + citations, eval v1 | 100% citation coverage; gate refuses stale verdicts; eval passes |
-| 3. Citizen Experience | Home, check/ask, answer card, source/excerpt view, share, client-side version history, geo precedence | End-to-end in six languages + one unseen |
-| 4. Accountability Loop | Review queue, corrections/versioning, k≥3 dashboard, referrals, brief export | A correction reaches re-checkers |
-| 5. Hardening | Red-team (injection, privacy, do-no-harm), threat model, rate/cost controls, future-directions doc | Documented results; retention tradeoff recorded |
-| 6. Submission | README + constraints matrix + methodology, video, deck, summary | All five artifacts complete |
+| Phase                  | Scope                                                                                                                        | Done when                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| 1. Foundation          | Scaffold, Postgres + Drizzle migrations, source registries, `hashIp()`, fail-closed LLM client                               | Migrations apply; registry seeds; fail-closed path tested        |
+| 2. Trust Engine        | Ingestion adapters, chunks + FTS + pg_trgm, Call 1 + Zod, deterministic scoring, freshness gate, Call 2 + citations, eval v1 | 100% citation coverage; gate refuses stale verdicts; eval passes |
+| 3. Citizen Experience  | Home, check/ask, answer card, source/excerpt view, share, client-side version history, geo precedence                        | End-to-end in six languages + one unseen                         |
+| 4. Accountability Loop | Review queue, corrections/versioning, k≥3 dashboard, referrals, brief export                                                 | A correction reaches re-checkers                                 |
+| 5. Hardening           | Red-team (injection, privacy, do-no-harm), threat model, rate/cost controls, future-directions doc                           | Documented results; retention tradeoff recorded                  |
+| 6. Submission          | README + constraints matrix + methodology, video, deck, summary                                                              | All five artifacts complete                                      |
 
 ## Demo target
 

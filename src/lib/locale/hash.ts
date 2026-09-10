@@ -16,7 +16,9 @@ export function normalizeIp(raw: string): string {
 export function hashIp(rawIp: string, secret?: string): string {
   const key = secret ?? optionalEnv("IP_HASH_SECRET");
   if (!key) {
-    throw new Error("IP_HASH_SECRET is not set — refusing to hash IPs without it");
+    throw new Error(
+      "IP_HASH_SECRET is not set — refusing to hash IPs without it",
+    );
   }
   return createHmac("sha256", key).update(normalizeIp(rawIp)).digest("hex");
 }

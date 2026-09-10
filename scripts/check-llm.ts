@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  callStructured,
-  NoCompliantProviderError,
-} from "@/lib/llm/client";
+import { callStructured, NoCompliantProviderError } from "@/lib/llm/client";
 
 const schema = z.object({
   ok: z.boolean(),

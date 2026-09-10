@@ -17,7 +17,9 @@ export function geoFromHeaders(headers: Headers): GeoHint {
   return {
     country,
     regionCode:
-      country && region ? `${country.toUpperCase()}-${region.toUpperCase()}` : undefined,
+      country && region
+        ? `${country.toUpperCase()}-${region.toUpperCase()}`
+        : undefined,
     city: headers.get("x-vercel-ip-city") ?? undefined,
     timezone: headers.get("x-vercel-ip-timezone") ?? undefined,
   };

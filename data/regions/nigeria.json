@@ -4,37 +4,82 @@
   "regions": [
     { "code": "NG", "level": "country", "name": "Nigeria", "parentCode": null },
     { "code": "NG-AB", "level": "state", "name": "Abia", "parentCode": "NG" },
-    { "code": "NG-AD", "level": "state", "name": "Adamawa", "parentCode": "NG" },
-    { "code": "NG-AK", "level": "state", "name": "Akwa Ibom", "parentCode": "NG" },
-    { "code": "NG-AN", "level": "state", "name": "Anambra", "parentCode": "NG" },
+    {
+      "code": "NG-AD",
+      "level": "state",
+      "name": "Adamawa",
+      "parentCode": "NG"
+    },
+    {
+      "code": "NG-AK",
+      "level": "state",
+      "name": "Akwa Ibom",
+      "parentCode": "NG"
+    },
+    {
+      "code": "NG-AN",
+      "level": "state",
+      "name": "Anambra",
+      "parentCode": "NG"
+    },
     { "code": "NG-BA", "level": "state", "name": "Bauchi", "parentCode": "NG" },
-    { "code": "NG-BY", "level": "state", "name": "Bayelsa", "parentCode": "NG" },
+    {
+      "code": "NG-BY",
+      "level": "state",
+      "name": "Bayelsa",
+      "parentCode": "NG"
+    },
     { "code": "NG-BE", "level": "state", "name": "Benue", "parentCode": "NG" },
     { "code": "NG-BO", "level": "state", "name": "Borno", "parentCode": "NG" },
-    { "code": "NG-CR", "level": "state", "name": "Cross River", "parentCode": "NG" },
+    {
+      "code": "NG-CR",
+      "level": "state",
+      "name": "Cross River",
+      "parentCode": "NG"
+    },
     { "code": "NG-DE", "level": "state", "name": "Delta", "parentCode": "NG" },
     { "code": "NG-EB", "level": "state", "name": "Ebonyi", "parentCode": "NG" },
     { "code": "NG-ED", "level": "state", "name": "Edo", "parentCode": "NG" },
     { "code": "NG-EK", "level": "state", "name": "Ekiti", "parentCode": "NG" },
     { "code": "NG-EN", "level": "state", "name": "Enugu", "parentCode": "NG" },
-    { "code": "NG-FC", "level": "state", "name": "Federal Capital Territory", "parentCode": "NG" },
+    {
+      "code": "NG-FC",
+      "level": "state",
+      "name": "Federal Capital Territory",
+      "parentCode": "NG"
+    },
     { "code": "NG-GO", "level": "state", "name": "Gombe", "parentCode": "NG" },
     { "code": "NG-IM", "level": "state", "name": "Imo", "parentCode": "NG" },
     { "code": "NG-JI", "level": "state", "name": "Jigawa", "parentCode": "NG" },
     { "code": "NG-KD", "level": "state", "name": "Kaduna", "parentCode": "NG" },
     { "code": "NG-KN", "level": "state", "name": "Kano", "parentCode": "NG" },
-    { "code": "NG-KT", "level": "state", "name": "Katsina", "parentCode": "NG" },
+    {
+      "code": "NG-KT",
+      "level": "state",
+      "name": "Katsina",
+      "parentCode": "NG"
+    },
     { "code": "NG-KB", "level": "state", "name": "Kebbi", "parentCode": "NG" },
     { "code": "NG-KO", "level": "state", "name": "Kogi", "parentCode": "NG" },
     { "code": "NG-KW", "level": "state", "name": "Kwara", "parentCode": "NG" },
     { "code": "NG-LA", "level": "state", "name": "Lagos", "parentCode": "NG" },
-    { "code": "NG-NA", "level": "state", "name": "Nasarawa", "parentCode": "NG" },
+    {
+      "code": "NG-NA",
+      "level": "state",
+      "name": "Nasarawa",
+      "parentCode": "NG"
+    },
     { "code": "NG-NI", "level": "state", "name": "Niger", "parentCode": "NG" },
     { "code": "NG-OG", "level": "state", "name": "Ogun", "parentCode": "NG" },
     { "code": "NG-ON", "level": "state", "name": "Ondo", "parentCode": "NG" },
     { "code": "NG-OS", "level": "state", "name": "Osun", "parentCode": "NG" },
     { "code": "NG-OY", "level": "state", "name": "Oyo", "parentCode": "NG" },
-    { "code": "NG-PL", "level": "state", "name": "Plateau", "parentCode": "NG" },
+    {
+      "code": "NG-PL",
+      "level": "state",
+      "name": "Plateau",
+      "parentCode": "NG"
+    },
     { "code": "NG-RI", "level": "state", "name": "Rivers", "parentCode": "NG" },
     { "code": "NG-SO", "level": "state", "name": "Sokoto", "parentCode": "NG" },
     { "code": "NG-TA", "level": "state", "name": "Taraba", "parentCode": "NG" },

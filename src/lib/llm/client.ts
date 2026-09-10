@@ -84,7 +84,9 @@ interface OpenRouterResponse {
 
 function isNoCompliantProvider(status: number, body: string): boolean {
   if (status !== 404 && status !== 400 && status !== 403) return false;
-  return /no endpoints|data policy|zero data retention|zdr|data_collection/i.test(body);
+  return /no endpoints|data policy|zero data retention|zdr|data_collection/i.test(
+    body,
+  );
 }
 
 function extractJson(raw: string): unknown {
@@ -214,7 +216,9 @@ export async function callStructured<T>(
     const inputTokens = payload.usage?.prompt_tokens ?? 0;
     const outputTokens = payload.usage?.completion_tokens ?? 0;
     const costUsd = payload.usage?.cost;
-    const content = contentToText(payload.choices?.[0]?.message?.content ?? null);
+    const content = contentToText(
+      payload.choices?.[0]?.message?.content ?? null,
+    );
 
     const finish = async (error?: Error): Promise<void> => {
       await options.onCall?.({
