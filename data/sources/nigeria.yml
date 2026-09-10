@@ -1,0 +1,175 @@
+country: NG
+sources:
+  # The /feed path serves HTML, not RSS. Needs the HTML adapter (Phase 2).
+  - id: ncdc
+    publisher: Nigeria Centre for Disease Control
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://ncdc.gov.ng/feed"
+    license: public
+    refresh_interval: null
+    enabled: false
+
+  - id: premium-times
+    publisher: Premium Times
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://www.premiumtimesng.com/feed"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  - id: daily-trust
+    publisher: Daily Trust
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://dailytrust.com/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  - id: punch
+    publisher: The Punch
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://punchng.com/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  # Blocks identified RSS readers with HTTP 429. Revisit with permission or an alternate feed.
+  - id: humangle
+    publisher: HumAngle
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://humanglemedia.com/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: false
+
+  - id: dubawa
+    publisher: Dubawa
+    type: factcheck
+    tier: 2
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://dubawa.org/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  - id: factcheckhub
+    publisher: FactCheckHub
+    type: factcheck
+    tier: 2
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://factcheckhub.com/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  # Country-filtered ReliefWeb feeds return HTTP 202 with an empty body to non-browser clients.
+  # The global feed is used instead, filtered by country keywords at ingestion.
+  - id: reliefweb-nga
+    publisher: ReliefWeb (UN OCHA)
+    type: humanitarian
+    tier: 2
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://reliefweb.int/updates/rss.xml"
+    include_keywords: [Nigeria]
+    license: open
+    refresh_interval: null
+    enabled: true
+
+  - id: nigeria-health-watch
+    publisher: Nigeria Health Watch
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://nigeriahealthwatch.com/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  # Bot-protected from CI; revisit with a different fetch path.
+  - id: africacheck-ng
+    publisher: Africa Check
+    type: factcheck
+    tier: 2
+    scope: [national, regional]
+    fetch:
+      kind: rss
+      url: "https://africacheck.org/feed"
+    license: copyrighted
+    refresh_interval: null
+    enabled: false
+
+  - id: nema-ng
+    publisher: National Emergency Management Agency
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://nema.gov.ng/feed"
+    license: public
+    refresh_interval: null
+    enabled: true
+
+  - id: nimet-ng
+    publisher: Nigerian Meteorological Agency
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://nimet.gov.ng/"
+    license: public
+    refresh_interval: null
+    enabled: false
+
+  - id: npf-ng
+    publisher: Nigeria Police Force
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://www.npf.gov.ng/"
+    license: public
+    refresh_interval: null
+    enabled: false
+
+  - id: inec-ng
+    publisher: Independent National Electoral Commission
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://inecnigeria.org/"
+    license: public
+    refresh_interval: null
+    enabled: false

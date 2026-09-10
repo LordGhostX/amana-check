@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Amana Check
 
-## Getting Started
+**Check before you share.**
 
-First, run the development server:
+A community-facing trust layer for fragile information environments. A rumor or question arrives in any language; Amana Check answers in that same language with what is actually known — sourced, dated, and actionable — and gives local peacebuilders an anonymous, aggregated signal of verification demand that exposes no one.
+
+Built for the OSF × Andela hackathon "Information you can trust". Primary track: Stability & Social Cohesion, with Transparency & Accountability and Safety (referral pathways only) as complementary tracks.
+
+## Status
+
+**Phase 2 — Trust engine in progress.** Ingestion, chunking, extraction, deterministic retrieval, and the freshness gate are working against a live corpus. Answer synthesis with citations and the eval harness are next. See [docs/PLAN.md](docs/PLAN.md).
+
+## Stack
+
+- Next.js (App Router) + TypeScript strict + Tailwind CSS
+- Postgres + Drizzle ORM (`postgres.js` driver); local Postgres in dev, Neon in production
+- OpenRouter (DeepSeek 4.1 Flash → 4 Flash fallback) with hardcoded ZDR + no-training routing
+- Zod validation at every model boundary, with deterministic fallbacks
+
+## Setup
+
+Requires [Bun](https://bun.sh) and a local Postgres.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+createdb amana_check
+cp .env.example .env          # then set OPENROUTER_API_KEY and IP_HASH_SECRET
+bun run db:migrate
+bun run db:seed
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Generate `IP_HASH_SECRET` with `openssl rand -hex 32`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | What it does |
+| --- | --- |
+| `bun run dev` | Start the app |
+| `bun run build` | Production build |
+| `bun run typecheck` | `tsc --noEmit` |
+| `bun run lint` | ESLint |
+| `bun run db:generate` | Generate Drizzle migrations from the schema |
+| `bun run db:migrate` | Apply migrations |
+| `bun run db:seed` | Load region registries and sources from `data/` |
+| `bun run db:studio` | Drizzle Studio |
+| `bun run ingest` | Fetch enabled sources into the corpus (flags: `--source`, `--country`, `--limit`) |
+| `bun run check:llm` | Verify the fail-closed OpenRouter path |
+| `bun run check:pipeline` | Run extraction → retrieval → freshness gate on a sample claim |
 
-## Learn More
+## Layout
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/app/                  English UI
+src/lib/db/               Drizzle schema + client
+src/lib/llm/              Fail-closed OpenRouter client + call logging
+src/lib/locale/           HMAC IP hashing, Vercel geo headers
+src/lib/registry/         Source/region registry schemas + loaders
+src/lib/trust/            Answer and claim types
+data/regions/             Nigeria (36 + FCT) and Kenya (47 counties)
+data/sources/             Source registries with tiers, licenses, health
+drizzle/                  Generated SQL migrations
+scripts/                  Seed, ingestion, and checks
+docs/                     Frozen plan
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Privacy posture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `claims` stores de-identified input and has **no join keys** to any identifier.
+- IPs are only ever `HMAC-SHA256(IP_HASH_SECRET, ip)` for rate limits and locale hints; raw IPs are never stored or logged.
+- LLM routing is hardcoded to zero-retention, no-training endpoints. If none is available the request fails closed rather than degrading.
+- Aggregated `events` are k≥3 and represent verification demand, not confirmed incidents.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [docs/PLAN.md](docs/PLAN.md) for the full trust model and the retention tradeoff.

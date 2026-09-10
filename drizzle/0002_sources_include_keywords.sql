@@ -1,0 +1,1 @@
+ALTER TABLE "sources" ADD COLUMN "include_keywords" jsonb DEFAULT '[]'::jsonb NOT NULL;

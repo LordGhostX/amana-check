@@ -1,0 +1,162 @@
+country: KE
+sources:
+  - id: kenya-news-agency
+    publisher: Kenya News Agency
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://www.kenyanews.go.ke/feed/"
+    license: public
+    refresh_interval: null
+    enabled: true
+
+  - id: nema-ke
+    publisher: National Environment Management Authority Kenya
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://www.nema.go.ke/feed"
+    license: public
+    refresh_interval: null
+    enabled: true
+
+  - id: standard-media
+    publisher: The Standard
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://www.standardmedia.co.ke/rss/headlines.php"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  - id: kbc
+    publisher: Kenya Broadcasting Corporation
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://www.kbc.co.ke/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  - id: capital-fm
+    publisher: Capital FM Kenya
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://www.capitalfm.co.ke/news/feed/"
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  # Country-filtered ReliefWeb feeds return HTTP 202 with an empty body to non-browser clients.
+  # The global feed is used instead, filtered by country keywords at ingestion.
+  - id: reliefweb-ken
+    publisher: ReliefWeb (UN OCHA)
+    type: humanitarian
+    tier: 2
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://reliefweb.int/updates/rss.xml"
+    include_keywords: [Kenya]
+    license: open
+    refresh_interval: null
+    enabled: true
+
+  # Bot-protected from CI; revisit with a different fetch path.
+  - id: nation-africa
+    publisher: Nation Media Group
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: rss
+      url: "https://nation.africa/kenya/rss"
+    license: copyrighted
+    refresh_interval: null
+    enabled: false
+
+  - id: pesacheck
+    publisher: PesaCheck
+    type: factcheck
+    tier: 2
+    scope: [national, regional]
+    fetch:
+      kind: rss
+      url: "https://pesacheck.org/feed"
+    license: copyrighted
+    refresh_interval: null
+    enabled: false
+
+  # Official primaries pending the HTML adapter (Phase 2).
+  - id: moh-ke
+    publisher: Ministry of Health Kenya
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://www.health.go.ke/"
+    license: public
+    refresh_interval: null
+    enabled: false
+
+  - id: ndma-ke
+    publisher: National Drought Management Authority
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://www.ndma.go.ke/"
+    license: public
+    refresh_interval: null
+    enabled: false
+
+  - id: met-ke
+    publisher: Kenya Meteorological Department
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://meteo.go.ke/"
+    license: public
+    refresh_interval: null
+    enabled: false
+
+  - id: nps-ke
+    publisher: National Police Service Kenya
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://www.nationalpolice.go.ke/"
+    license: public
+    refresh_interval: null
+    enabled: false
+
+  - id: iebc-ke
+    publisher: Independent Electoral and Boundaries Commission
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: html
+      url: "https://www.iebc.or.ke/"
+    license: public
+    refresh_interval: null
+    enabled: false
