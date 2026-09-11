@@ -1,5 +1,4 @@
-import { createHash } from "node:crypto";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { answerVersions, answers, claims } from "@/lib/db/schema";
 import { PROMPT_VERSIONS } from "@/lib/llm/prompts";
@@ -18,7 +17,8 @@ import {
 } from "@/lib/trust/freshness";
 import type { AnswerPayload, AnswerStatus, ClaimType } from "@/lib/trust/types";
 import { clusterKeyFor, recordVerificationDemand } from "./events";
-import { extractClaim } from "./extract";
+import { extractClaim, fallbackExtraction } from "./extract";
+import { canUseCachedAnswer, claimHashFor } from "./cache";
 import type { Extraction } from "./schemas";
 import { synthesizeAnswer } from "./synthesize";
 
@@ -72,20 +72,55 @@ async function timed<T>(work: () => Promise<T>): Promise<[T, number]> {
   return [value, Date.now() - startedAt];
 }
 
-export function claimHashFor(
-  extraction: Extraction,
-  country?: string,
-  regionCode?: string,
-): string {
-  const normalized = extraction.english_query
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-  return createHash("sha256")
-    .update(
-      `${normalized}|${extraction.claim_type}|${country ?? ""}|${regionCode ?? ""}`,
-    )
-    .digest("hex");
+async function loadCachedExtraction(
+  claimId: number,
+  text: string,
+  answerLang: string,
+  claimType: ClaimType,
+): Promise<{ extraction: Extraction; usedFallback: boolean }> {
+  const rows = await db
+    .select({
+      claimText: claims.claimText,
+      englishQuery: claims.englishQuery,
+      keywords: claims.keywords,
+      locationHints: claims.locationHints,
+      detectedLang: claims.detectedLang,
+      languageConfidence: claims.languageConfidence,
+      claimType: claims.claimType,
+      sensitivity: claims.sensitivity,
+    })
+    .from(claims)
+    .where(eq(claims.id, claimId))
+    .limit(1);
+  const stored = rows[0];
+  const fallback = fallbackExtraction(text);
+  if (!stored) {
+    return {
+      extraction: {
+        ...fallback,
+        detected_lang: answerLang,
+        claim_type: claimType,
+      },
+      usedFallback: true,
+    };
+  }
+
+  return {
+    extraction: {
+      detected_lang: stored.detectedLang ?? answerLang,
+      language_confidence: stored.languageConfidence ?? 0,
+      claim_text: stored.claimText,
+      claim_type: stored.claimType ?? claimType,
+      sensitivity: stored.sensitivity ?? fallback.sensitivity,
+      english_query: stored.englishQuery ?? fallback.english_query,
+      keywords:
+        stored.keywords && stored.keywords.length > 0
+          ? stored.keywords
+          : fallback.keywords,
+      location_hints: stored.locationHints ?? [],
+    },
+    usedFallback: stored.languageConfidence === null,
+  };
 }
 
 async function recordDemandSafely(
@@ -165,56 +200,69 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     },
   };
 
-  const [extraction, extractionMs] = await timed(() =>
-    extractClaim(options.text),
-  );
-  timing.stages.extractionMs = extractionMs;
   const claimHash = claimHashFor(
-    extraction,
+    options.text,
     options.fallbackCountry,
     options.fallbackRegionCode,
   );
-  const lang = extraction.detected_lang;
 
   if (!options.bypassCache) {
     const [cachedRows, cacheLookupMs] = await timed(() =>
       db
         .select()
         .from(answers)
-        .where(and(eq(answers.claimHash, claimHash), eq(answers.lang, lang)))
+        .where(eq(answers.claimHash, claimHash))
+        .orderBy(desc(answers.updatedAt))
         .limit(1),
     );
     timing.stages.cacheLookupMs = cacheLookupMs;
     const cached = cachedRows[0];
     if (cached) {
-      const persistenceStartedAt = Date.now();
-      if (options.recordDemand !== false) {
-        await recordDemandSafely(
-          extraction,
-          cached.payload.location?.country,
-          cached.payload.location?.regionCode,
-          cached.claimType,
-          cached.payload.status,
-        );
+      const cachedExtraction = await loadCachedExtraction(
+        cached.claimId,
+        options.text,
+        cached.lang,
+        cached.claimType,
+      );
+      if (
+        canUseCachedAnswer(cached.reviewState, cachedExtraction.usedFallback)
+      ) {
+        const persistenceStartedAt = Date.now();
+        const versions = await loadVersions(cached.id);
+        if (options.recordDemand !== false) {
+          await recordDemandSafely(
+            cachedExtraction.extraction,
+            cached.payload.location?.country,
+            cached.payload.location?.regionCode,
+            cached.claimType,
+            cached.payload.status,
+          );
+        }
+        timing.stages.persistenceMs = Date.now() - persistenceStartedAt;
+        timing.totalMs = Date.now() - pipelineStartedAt;
+        return {
+          answerId: cached.id,
+          claimHash,
+          version: cached.version,
+          cached: true,
+          payload: cached.payload,
+          extraction: cachedExtraction.extraction,
+          evidence: [],
+          assessment: cachedAssessment(cached.payload),
+          location: cachedLocation(cached.payload),
+          versions,
+          timing,
+        };
       }
-      const versions = await loadVersions(cached.id);
-      timing.stages.persistenceMs = Date.now() - persistenceStartedAt;
-      timing.totalMs = Date.now() - pipelineStartedAt;
-      return {
-        answerId: cached.id,
-        claimHash,
-        version: cached.version,
-        cached: true,
-        payload: cached.payload,
-        extraction,
-        evidence: [],
-        assessment: cachedAssessment(cached.payload),
-        location: cachedLocation(cached.payload),
-        versions,
-        timing,
-      };
     }
   }
+
+  const [extractionResult, extractionMs] = await timed(() =>
+    extractClaim(options.text),
+  );
+  timing.stages.extractionMs = extractionMs;
+  const { extraction, usedFallback: extractionUsedFallback } = extractionResult;
+  const lang = extraction.detected_lang;
 
   const [location, locationMs] = await timed(() =>
     resolveLocation({
@@ -287,54 +335,68 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
   timing.stages.synthesisMs = synthesisMs;
 
   const persistenceStartedAt = Date.now();
-  await db.insert(claims).values({
-    claimHash,
-    claimText: extraction.claim_text,
-    englishQuery: extraction.english_query,
-    keywords: extraction.keywords,
-    locationHints: extraction.location_hints,
-    detectedLang: lang,
-    languageConfidence: Math.round(extraction.language_confidence),
-    claimType: extraction.claim_type,
-    sensitivity: extraction.sensitivity,
-    country: location.country ?? null,
-    regionCode: location.regionCode ?? null,
-    locationText: extraction.location_hints.join(", ") || null,
-  });
+  const persisted = await db.transaction(async (tx) => {
+    const insertedClaims = await tx
+      .insert(claims)
+      .values({
+        claimHash,
+        claimText: extraction.claim_text,
+        englishQuery: extraction.english_query,
+        keywords: extraction.keywords,
+        locationHints: extraction.location_hints,
+        detectedLang: lang,
+        languageConfidence: extractionUsedFallback
+          ? null
+          : Math.round(extraction.language_confidence),
+        claimType: extraction.claim_type,
+        sensitivity: extraction.sensitivity,
+        country: location.country ?? null,
+        regionCode: location.regionCode ?? null,
+        locationText: extraction.location_hints.join(", ") || null,
+      })
+      .returning({ id: claims.id });
+    const claim = insertedClaims[0];
+    if (!claim) throw new Error("claim insert did not return an id");
 
-  const upserted = await db
-    .insert(answers)
-    .values({
-      claimHash,
-      lang,
-      status: payload.status,
-      claimType: extraction.claim_type,
-      payload,
-      promptVersion: PROMPT_VERSIONS.synthesize,
-      version: 1,
-    })
-    .onConflictDoUpdate({
-      target: [answers.claimHash, answers.lang],
-      set: {
+    const upserted = await tx
+      .insert(answers)
+      .values({
+        claimId: claim.id,
+        claimHash,
+        lang,
         status: payload.status,
         claimType: extraction.claim_type,
         payload,
         promptVersion: PROMPT_VERSIONS.synthesize,
-        version: sql`${answers.version} + 1`,
-        updatedAt: new Date(),
-      },
-    })
-    .returning({ id: answers.id, version: answers.version });
-  const answerId = upserted[0]!.id;
-  const version = upserted[0]!.version;
+        version: 1,
+      })
+      .onConflictDoUpdate({
+        target: [answers.claimHash, answers.lang],
+        set: {
+          claimId: claim.id,
+          status: payload.status,
+          claimType: extraction.claim_type,
+          payload,
+          promptVersion: PROMPT_VERSIONS.synthesize,
+          version: sql`${answers.version} + 1`,
+          updatedAt: new Date(),
+        },
+      })
+      .returning({ id: answers.id, version: answers.version });
+    const answer = upserted[0];
+    if (!answer) throw new Error("answer upsert did not return a row");
 
-  await db.insert(answerVersions).values({
-    answerId,
-    version,
-    status: payload.status,
-    payload,
-    changeReason: version === 1 ? "initial" : "recheck",
+    await tx.insert(answerVersions).values({
+      answerId: answer.id,
+      version: answer.version,
+      status: payload.status,
+      payload,
+      changeReason: answer.version === 1 ? "initial" : "recheck",
+    });
+
+    return { answerId: answer.id, version: answer.version };
   });
+  const { answerId, version } = persisted;
 
   if (options.recordDemand !== false) {
     await recordDemandSafely(

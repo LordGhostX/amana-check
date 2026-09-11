@@ -12,6 +12,7 @@ CREATE TABLE "answer_versions" (
 --> statement-breakpoint
 CREATE TABLE "answers" (
 	"id" serial PRIMARY KEY NOT NULL,
+	"claim_id" integer NOT NULL,
 	"claim_hash" text NOT NULL,
 	"lang" text NOT NULL,
 	"status" text NOT NULL,
@@ -171,6 +172,7 @@ CREATE TABLE "sources" (
 );
 --> statement-breakpoint
 ALTER TABLE "answer_versions" ADD CONSTRAINT "answer_versions_answer_id_answers_id_fk" FOREIGN KEY ("answer_id") REFERENCES "public"."answers"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "answers" ADD CONSTRAINT "answers_claim_id_claims_id_fk" FOREIGN KEY ("claim_id") REFERENCES "public"."claims"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_chunks" ADD CONSTRAINT "document_chunks_document_id_documents_id_fk" FOREIGN KEY ("document_id") REFERENCES "public"."documents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "document_versions" ADD CONSTRAINT "document_versions_document_id_documents_id_fk" FOREIGN KEY ("document_id") REFERENCES "public"."documents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "documents" ADD CONSTRAINT "documents_source_id_sources_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."sources"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

@@ -22,9 +22,9 @@ function parseArgs(argv: string[]) {
 async function main() {
   const { text, country } = parseArgs(process.argv.slice(2));
 
-  const extraction = await extractClaim(text);
+  const { extraction, usedFallback } = await extractClaim(text);
   console.log("EXTRACTION");
-  console.log(JSON.stringify(extraction, null, 2));
+  console.log(JSON.stringify({ ...extraction, usedFallback }, null, 2));
 
   const evidence = await searchEvidence({
     query: [extraction.english_query, ...extraction.keywords].join(" "),

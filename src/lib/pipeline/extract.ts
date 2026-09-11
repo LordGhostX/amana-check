@@ -3,7 +3,14 @@ import { logLlmCall } from "@/lib/llm/log";
 import { buildExtractMessages, PROMPT_VERSIONS } from "@/lib/llm/prompts";
 import { extractionSchema, type Extraction } from "./schemas";
 
-export async function extractClaim(text: string): Promise<Extraction> {
+export interface ClaimExtractionResult {
+  extraction: Extraction;
+  usedFallback: boolean;
+}
+
+export async function extractClaim(
+  text: string,
+): Promise<ClaimExtractionResult> {
   const trimmed = text.trim().slice(0, 4000);
   try {
     const result = await callStructured(
@@ -17,9 +24,9 @@ export async function extractClaim(text: string): Promise<Extraction> {
         onCall: logLlmCall,
       },
     );
-    return result.data;
+    return { extraction: result.data, usedFallback: false };
   } catch {
-    return fallbackExtraction(trimmed);
+    return { extraction: fallbackExtraction(trimmed), usedFallback: true };
   }
 }
 

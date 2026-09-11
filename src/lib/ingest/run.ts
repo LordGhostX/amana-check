@@ -14,6 +14,7 @@ import { htmlToText } from "./clean";
 import { fetchHtmlItems, type HtmlItem } from "./html";
 import { withIngestLock } from "./lock";
 import { fetchFeed, type FeedItem } from "./rss";
+import { fetchWordPressPosts, type WordPressItem } from "./wordpress";
 
 export interface IngestOptions {
   sourceId?: string;
@@ -226,6 +227,15 @@ function normalizedHtmlItem(item: HtmlItem): NormalizedItem {
   };
 }
 
+function normalizedWordPressItem(item: WordPressItem): NormalizedItem {
+  return {
+    title: item.title,
+    link: item.link,
+    publishedAt: item.publishedAt,
+    text: htmlToText(item.html),
+  };
+}
+
 function feedCacheKey(source: SourceRow): string {
   return `${source.fetchKind}:${source.url}:${source.fetchConfig?.timeoutMs ?? 20_000}`;
 }
@@ -355,6 +365,18 @@ async function processSource(
       }
       for (const item of rawItems) {
         await processItem(normalizedFeedItem(item));
+      }
+    } else if (source.fetchKind === "api") {
+      const rawItems = await fetchWordPressPosts(
+        source.url,
+        source.fetchConfig?.timeoutMs ?? 20_000,
+        source.fetchConfig?.maxItems ?? 10,
+      );
+      if (rawItems.length === 0) {
+        throw new Error("API returned no posts (check the endpoint)");
+      }
+      for (const item of rawItems) {
+        await processItem(normalizedWordPressItem(item));
       }
     } else if (source.fetchKind === "html") {
       const fetched = await fetchHtmlItems(source, async (item) => {

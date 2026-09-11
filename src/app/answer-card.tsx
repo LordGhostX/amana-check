@@ -5,6 +5,7 @@ import type { AnswerPayload, AnswerStatus } from "@/lib/trust/types";
 import type { AnswerVersionInfo } from "@/lib/pipeline/answer";
 import {
   getEvidenceReferences,
+  sourceNumbersFor,
   type EvidenceReferences,
 } from "@/lib/trust/references";
 
@@ -106,23 +107,23 @@ function renderCitations(
   value: string,
   numberByCitation: Map<number, number>,
 ): ReactNode[] {
-  const parts = value.split(/(\[S\d+\])/g);
-  return parts.map((part, index) => {
-    const match = part.match(/^\[S(\d+)\]$/);
-    if (!match) return part;
-    const sourceNumber = numberByCitation.get(Number(match[1]));
-    if (sourceNumber === undefined) return part;
-    return (
+  return [
+    stripCitations(value),
+    ...sourceNumbersFor(value, numberByCitation).map((sourceNumber) => (
       <a
-        key={`${part}-${index}`}
+        key={sourceNumber}
         href={`#evidence-${sourceNumber}`}
         className="ml-1 inline-flex min-w-5 items-center justify-center rounded bg-brand-soft px-1 font-mono text-[0.7rem] font-semibold text-brand-strong no-underline"
         aria-label={`See evidence source ${sourceNumber}`}
       >
         {sourceNumber}
       </a>
-    );
-  });
+    )),
+  ];
+}
+
+function verdictReason(payload: AnswerPayload, fallback: string): string {
+  return payload.statusReason.trim() || fallback;
 }
 
 function buildShareText(
@@ -130,6 +131,7 @@ function buildShareText(
   references: EvidenceReferences,
 ): string {
   const meta = STATUS_META[payload.status];
+  const reason = verdictReason(payload, meta.description);
   const sourceLines = references.items.flatMap(({ item, number }) => {
     const heading = `${number}. ${item.publisher}: ${item.title} (${formatDate(item.publishedAt)})`;
     return /^https?:\/\//i.test(item.url)
@@ -145,7 +147,7 @@ function buildShareText(
     "",
     "Verdict",
     meta.label,
-    meta.description,
+    reason,
     "",
     ...(payload.whatWeKnow.length > 0 ? ["What the sources say"] : []),
     ...payload.whatWeKnow.map((bullet) => `- ${stripCitations(bullet)}`),
@@ -176,6 +178,7 @@ export function AnswerCard({
     "idle" | "sending" | "sent" | "error"
   >("idle");
   const meta = STATUS_META[payload.status];
+  const reason = verdictReason(payload, meta.description);
   const evidenceReferences = useMemo(
     () => getEvidenceReferences(payload),
     [payload],
@@ -234,9 +237,7 @@ export function AnswerCard({
                 </span>
               ) : null}
             </div>
-            <p className="mt-1 text-sm leading-6 text-muted">
-              {meta.description} {payload.statusReason}
-            </p>
+            <p className="mt-1 text-sm leading-6 text-muted">{reason}</p>
             <p className="mt-3 flex flex-wrap gap-x-2 font-mono text-xs text-muted">
               <span>
                 Checked {new Date(payload.checkedAt).toLocaleString()}

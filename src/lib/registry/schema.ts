@@ -15,7 +15,7 @@ export const sourceEntrySchema = z.object({
     content_selector: z.string().optional(),
     title_selector: z.string().optional(),
     date_selector: z.string().optional(),
-    max_items: z.number().int().min(1).max(50).optional(),
+    max_items: z.number().int().min(1).max(100).optional(),
     timeout_ms: z.number().int().min(5000).max(120000).optional(),
   }),
   license: z.string().optional(),

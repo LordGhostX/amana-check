@@ -8,8 +8,8 @@ Amana Check is retrieval-first. A language model reads the message and writes th
 
 ## Ingestion
 
-- Sources live in `data/sources/nigeria.yml` and `data/sources/kenya.yml`. Each entry has a publisher, type, tier, scope, fetch kind, URL, license, enabled state, and adapter configuration: link pattern or list selector, content and title selectors, item cap, and timeout.
-- `bun run ingest` fetches every enabled source through one of two adapters. Sources are shuffled for each run and processed with up to four workers, while each source keeps its own article requests in order. The RSS adapter parses feeds and item HTML. The HTML adapter runs in listing mode, where it follows links that match the configured pattern and writes each article after it is fetched, or in snapshot mode, where it stores one page as a versioned document. The Kenya Met weather warnings page uses snapshot mode because the warning list changes in place.
+- Sources live in `data/sources/nigeria.yml` and `data/sources/kenya.yml`. Each entry has a publisher, type, tier, scope, fetch kind, URL, license, enabled state, and adapter configuration: link pattern or list selector, content and title selectors, item cap, and timeout. WordPress publishers can use the JSON API adapter when their public RSS endpoint is blocked or unavailable.
+- `bun run ingest` fetches every enabled source through the RSS, HTML, or JSON API adapter. Sources are shuffled for each run and processed with up to four workers, while each source keeps its own article requests in order. The RSS adapter parses feeds and item HTML. The HTML adapter runs in listing mode, where it follows links that match the configured pattern and writes each article after it is fetched, or in snapshot mode, where it stores one page as a versioned document. The JSON API adapter parses WordPress posts and uses their rendered content. The Kenya Met weather warnings page uses snapshot mode because the warning list changes in place.
 - Text is split into windows of about 900 characters with 150 characters of overlap. Each document stores a SHA-256 content hash.
 - Re-ingesting unchanged content refreshes `fetched_at` only. Changed content adds a `document_versions` snapshot and increments the document version, so an answer can point at the source version that was current when the check ran.
 - Every document write is its own transaction, including its chunks and any previous version snapshot. A run can therefore leave useful documents in the corpus if a later source fails or the function reaches its time limit; the next run reconciles those documents by their stable source-and-URL ID.
@@ -38,7 +38,7 @@ T1 alone can support a verdict. A contested claim can also reach a verdict with 
 4. Weight term coverage by inverse document frequency, so rare terms such as Garissa, Benue, or cholera count more than common terms such as Kenya or county.
 5. Reject candidates below an IDF-weighted coverage floor of 0.3, or with fewer than two matched terms on queries of three or more terms. This keeps an off-topic official article from counting as evidence.
 6. Score the survivors: relevance (weight 3) plus locality (1.2), source tier (0.5), and recency (0.6). Relevance dominates, so tier and freshness cannot promote an off-topic document.
-7. Return the top eight chunks with their document and source metadata.
+7. Keep the highest-ranked matching chunk from each document before the candidate limit, score those survivors, then return up to eight distinct documents with their source metadata.
 
 ## Evidence gate
 
@@ -71,7 +71,7 @@ One more rule applies before a verdict is accepted. If the claim names a place a
 The model never receives the corpus. It sees two small payloads:
 
 - Call 1 receives only the user's message, capped at 4,000 characters. No source text is included.
-- Retrieval runs in Postgres and returns at most 24 candidate chunks, which are scored and trimmed to the top 8.
+- Retrieval runs in Postgres and returns the highest-ranked matching chunk from at most 24 distinct documents; those candidates are scored and trimmed to 8 excerpts.
 - Call 2 receives the claim, the status and reason fixed by the gate, up to three referral contacts, and those 8 excerpts. Each excerpt is capped at 700 characters, so the evidence block is at most about 5.6 KB. When retrieval returns nothing, the block reads `EVIDENCE: none found.`
 
 Evidence selection and the status decision stay deterministic. The model only phrases what the retrieved excerpts support, and the server validates every citation against them.
@@ -85,7 +85,7 @@ Evidence selection and the status decision stay deterministic. The model only ph
 
 ## Caching and versioning
 
-- A claim is hashed from its normalized English query, claim type, and country. Answers are cached per claim and language.
+- A request is hashed from its normalized original text, country, and region before any model call. An unreviewed answer produced from fallback extraction is stored for feedback and review but skipped on the next cache lookup, so extraction is retried.
 - Corrections and re-checks add `answer_versions` rows with a reason. The interface can show that history and tell a returning visitor an answer changed, without storing an identity.
 
 ## Evaluation

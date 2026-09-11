@@ -192,6 +192,9 @@ export const answers = pgTable(
   "answers",
   {
     id: serial("id").primaryKey(),
+    claimId: integer("claim_id")
+      .notNull()
+      .references(() => claims.id, { onDelete: "cascade" }),
     claimHash: text("claim_hash").notNull(),
     lang: text("lang").notNull(),
     status: text("status").$type<AnswerStatus>().notNull(),

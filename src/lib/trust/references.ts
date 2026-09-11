@@ -16,6 +16,20 @@ function citationRefs(value: string): number[] {
   return Array.from(value.matchAll(CITATION_RE), (match) => Number(match[1]));
 }
 
+export function sourceNumbersFor(
+  value: string,
+  numberByCitation: Map<number, number>,
+): number[] {
+  return Array.from(
+    new Set(
+      citationRefs(value).flatMap((citation) => {
+        const sourceNumber = numberByCitation.get(citation);
+        return sourceNumber === undefined ? [] : [sourceNumber];
+      }),
+    ),
+  );
+}
+
 export function getEvidenceReferences(
   payload: AnswerPayload,
 ): EvidenceReferences {

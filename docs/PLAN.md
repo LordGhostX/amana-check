@@ -14,7 +14,7 @@ Amana Check is a community-facing trust layer for fragile information environmen
 | Location precedence | Explicit location in the claim, then user selection, then cookie, then Vercel region, then national.                                                             |
 | UI                  | English only, browser-translatable. Answer content in the detected language.                                                                                     |
 | Language            | Any input is detected, translated into an English query for search, and answered in the original language. Fallback is English.                                  |
-| Model               | OpenRouter with an ordered fallback chain: `deepseek/deepseek-v4.1-flash`, then `deepseek/deepseek-v4-flash`.                                                    |
+| Model               | OpenRouter with an ordered fallback chain: `deepseek/deepseek-v4.1-flash`, then `deepseek/deepseek-v4-flash-0731`.                                               |
 | Privacy invariants  | Hardcoded `zdr: true`, `data_collection: "deny"`, `require_parameters: true`. Fail closed.                                                                       |
 | Retrieval           | Postgres FTS and `pg_trgm` with deterministic scoring. No aliases, no fact cards, no LLM reranker.                                                               |
 | Pipeline            | Two model calls, Zod validation on both, one retry, deterministic fallback.                                                                                      |
@@ -39,7 +39,7 @@ Every OpenRouter call sends:
 
 ```json
 {
-  "models": ["deepseek/deepseek-v4.1-flash", "deepseek/deepseek-v4-flash"],
+  "models": ["deepseek/deepseek-v4.1-flash", "deepseek/deepseek-v4-flash-0731"],
   "provider": {
     "zdr": true,
     "data_collection": "deny",

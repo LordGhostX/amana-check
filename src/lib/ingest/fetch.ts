@@ -8,6 +8,7 @@ export const INGEST_USER_AGENT =
   "AmanaCheck/0.1 (+https://amana-check.vercel.app; ingestion)";
 export const ACCEPT_XML =
   "application/rss+xml, application/atom+xml, application/xml, text/xml, */*";
+export const ACCEPT_JSON = "application/json, application/*+json, */*";
 export const ACCEPT_HTML = "text/html, application/xhtml+xml;q=0.9, */*;q=0.8";
 
 export interface FetchTextOptions {

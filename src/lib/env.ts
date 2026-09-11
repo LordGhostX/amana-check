@@ -15,7 +15,7 @@ export function optionalEnv(name: string): string | undefined {
 export function parseModelChain(): string[] {
   const raw = optionalEnv("OPENROUTER_MODELS");
   if (!raw) {
-    return ["deepseek/deepseek-v4.1-flash", "deepseek/deepseek-v4-flash"];
+    return ["deepseek/deepseek-v4.1-flash", "deepseek/deepseek-v4-flash-0731"];
   }
   return raw
     .split(",")

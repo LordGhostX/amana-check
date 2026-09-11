@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { getEvidenceReferences } from "../src/lib/trust/references";
+import {
+  getEvidenceReferences,
+  sourceNumbersFor,
+} from "../src/lib/trust/references";
 import type { AnswerPayload, EvidenceItem } from "../src/lib/trust/types";
 
 function evidence(
@@ -72,4 +75,21 @@ test("returns no sources when the answer references none", () => {
 
   assert.deepEqual(references.items, []);
   assert.equal(references.numberByCitation.size, 0);
+});
+
+test("lists a referenced document once within a finding", () => {
+  const references = getEvidenceReferences(
+    payload({
+      whatWeKnow: ["Both excerpts support this [S1][S2]."],
+      evidence: [evidence("same", "Same", 1), evidence("same", "Same", 2)],
+    }),
+  );
+
+  assert.deepEqual(
+    sourceNumbersFor(
+      "Both excerpts support this [S1][S2].",
+      references.numberByCitation,
+    ),
+    [1],
+  );
 });

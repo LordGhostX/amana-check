@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { deduplicateDocuments } from "./deduplicate";
 
 export interface SearchOptions {
   query: string;
@@ -113,27 +114,52 @@ export async function searchEvidence(
   const limit = options.limit ?? 12;
 
   const rows = await db.execute(sql`
+    WITH matching_chunks AS (
+      SELECT
+        c.id AS chunk_id,
+        c.document_id,
+        c.content,
+        d.title,
+        d.url,
+        d.published_at,
+        d.fetched_at,
+        d.tier,
+        d.country,
+        s.publisher,
+        ts_rank(
+          to_tsvector('english', c.content),
+          to_tsquery('english', ${tsquery})
+        ) AS rank
+      FROM document_chunks c
+      JOIN documents d ON d.id = c.document_id
+      JOIN sources s ON s.id = d.source_id
+      WHERE to_tsvector('english', c.content) @@ to_tsquery('english', ${tsquery})
+        ${options.country ? sql`AND d.country = ${options.country}` : sql``}
+    ),
+    ranked_chunks AS (
+      SELECT
+        matching_chunks.*,
+        row_number() OVER (
+          PARTITION BY document_id
+          ORDER BY rank DESC, published_at DESC NULLS LAST, chunk_id ASC
+        ) AS document_rank
+      FROM matching_chunks
+    )
     SELECT
-      c.id AS chunk_id,
-      c.document_id,
-      c.content,
-      d.title,
-      d.url,
-      d.published_at,
-      d.fetched_at,
-      d.tier,
-      d.country,
-      s.publisher,
-      ts_rank(
-        to_tsvector('english', c.content),
-        to_tsquery('english', ${tsquery})
-      ) AS rank
-    FROM document_chunks c
-    JOIN documents d ON d.id = c.document_id
-    JOIN sources s ON s.id = d.source_id
-    WHERE to_tsvector('english', c.content) @@ to_tsquery('english', ${tsquery})
-      ${options.country ? sql`AND d.country = ${options.country}` : sql``}
-    ORDER BY rank DESC, d.published_at DESC NULLS LAST
+      chunk_id,
+      document_id,
+      content,
+      title,
+      url,
+      published_at,
+      fetched_at,
+      tier,
+      country,
+      publisher,
+      rank
+    FROM ranked_chunks
+    WHERE document_rank = 1
+    ORDER BY rank DESC, published_at DESC NULLS LAST, chunk_id ASC
     LIMIT ${limit * 3}
   `);
 
@@ -201,5 +227,8 @@ export async function searchEvidence(
     })
     .filter((chunk): chunk is RetrievedChunk => chunk !== null);
 
-  return scored.sort((a, b) => b.score - a.score).slice(0, limit);
+  return deduplicateDocuments(scored.sort((a, b) => b.score - a.score)).slice(
+    0,
+    limit,
+  );
 }

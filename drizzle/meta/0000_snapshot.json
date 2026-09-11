@@ -1,5 +1,5 @@
 {
-  "id": "5c1b2924-4f12-46a3-b519-2ec639ccaa56",
+  "id": "2d874832-5e5b-479f-bd09-efb858a14e27",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -104,6 +104,12 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "claim_id": {
+          "name": "claim_id",
+          "type": "integer",
+          "primaryKey": false,
           "notNull": true
         },
         "claim_hash": {
@@ -212,7 +218,21 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "answers_claim_id_claims_id_fk": {
+          "name": "answers_claim_id_claims_id_fk",
+          "tableFrom": "answers",
+          "tableTo": "claims",
+          "columnsFrom": [
+            "claim_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},

@@ -14,7 +14,7 @@ The proof of concept works end to end. The corpus, trust engine, citizen experie
 - Red-team: 11 checks pass, including live prompt injection, forged citations, and oversized input.
 - Corpus: 26 enabled sources, 13 for Nigeria and 13 for Kenya, holding 273 documents.
 
-The model never receives the corpus. Retrieval shortlists 24 chunks and sends at most 8 excerpts, each capped at 700 characters; [docs/methodology.md](docs/methodology.md) explains the pipeline and its context budget.
+The model never receives the corpus. Retrieval shortlists the highest-ranked chunk from up to 24 distinct documents and sends at most 8 excerpts, each capped at 700 characters; [docs/methodology.md](docs/methodology.md) explains the pipeline and its context budget.
 
 See [docs/PLAN.md](docs/PLAN.md) for the frozen plan and [docs/constraints-matrix.md](docs/constraints-matrix.md) for the hackathon constraints mapped to code.
 
