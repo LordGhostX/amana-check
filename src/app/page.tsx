@@ -1,27 +1,32 @@
 import Link from "next/link";
 import { count, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { regions, sources } from "@/lib/db/schema";
+import { documents, regions, sources } from "@/lib/db/schema";
 import { CheckForm } from "./check-form";
+import { LocalizedCount } from "./localized-count";
 
 export const dynamic = "force-dynamic";
 
 async function loadRegistryCounts() {
   try {
-    const [regionRow] = await db.select({ value: count() }).from(regions);
-    const [sourceRow] = await db
-      .select({
-        total: count(),
-        enabled:
-          sql<number>`count(*) filter (where ${sources.enabled})`.mapWith(
-            Number,
-          ),
-      })
-      .from(sources);
+    const [[regionRow], [sourceRow], [documentRow]] = await Promise.all([
+      db.select({ value: count() }).from(regions),
+      db
+        .select({
+          total: count(),
+          enabled:
+            sql<number>`count(*) filter (where ${sources.enabled})`.mapWith(
+              Number,
+            ),
+        })
+        .from(sources),
+      db.select({ value: count() }).from(documents),
+    ]);
     return {
       regions: regionRow?.value ?? 0,
       sources: sourceRow?.total ?? 0,
       sourcesEnabled: sourceRow?.enabled ?? 0,
+      documents: documentRow?.value ?? 0,
     };
   } catch {
     return null;
@@ -111,7 +116,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-12 sm:px-8 md:grid-cols-[1fr_auto] md:items-end md:py-16">
+      <section className="mx-auto grid w-full max-w-7xl gap-8 px-5 py-12 sm:px-8 md:py-16 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
           <p className="font-mono text-xs tracking-[0.18em] text-brand-strong uppercase">
             Source rules
@@ -128,17 +133,23 @@ export default async function Home() {
           </Link>
         </div>
         {counts ? (
-          <dl className="grid grid-cols-2 gap-3">
+          <dl className="grid gap-3 sm:grid-cols-3">
             <div className="min-w-32 rounded-2xl border border-line bg-surface p-5">
               <dt className="text-sm text-muted">Regions covered</dt>
               <dd className="mt-1 text-3xl font-semibold tracking-[-0.04em] text-ink">
-                {counts.regions}
+                <LocalizedCount value={counts.regions} />
               </dd>
             </div>
             <div className="min-w-32 rounded-2xl border border-line bg-surface p-5">
               <dt className="text-sm text-muted">Active sources</dt>
               <dd className="mt-1 text-3xl font-semibold tracking-[-0.04em] text-ink">
-                {counts.sourcesEnabled}
+                <LocalizedCount value={counts.sourcesEnabled} />
+              </dd>
+            </div>
+            <div className="min-w-32 rounded-2xl border border-line bg-surface p-5">
+              <dt className="text-sm text-muted">Indexed documents</dt>
+              <dd className="mt-1 text-3xl font-semibold tracking-[-0.04em] text-ink">
+                <LocalizedCount value={counts.documents} />
               </dd>
             </div>
           </dl>
