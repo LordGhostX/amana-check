@@ -87,7 +87,7 @@ export default function MethodologyPage() {
           <div className="mt-8 grid min-w-0 gap-6 md:grid-cols-[1fr_0.75fr] md:items-end">
             <div className="min-w-0">
               <p className="font-mono text-xs tracking-[0.16em] text-brand-strong uppercase">
-                The method
+                The methodology
               </p>
               <h1 className="balance mt-3 text-4xl leading-tight font-semibold tracking-tighter text-ink sm:text-6xl">
                 How Amana reaches an answer.

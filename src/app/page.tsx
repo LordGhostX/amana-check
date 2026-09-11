@@ -124,7 +124,7 @@ export default async function Home() {
             href="/methodology"
             className="mt-6 inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-brand hover:text-brand-strong"
           >
-            Read the full method <span aria-hidden="true">→</span>
+            Read the full methodology <span aria-hidden="true">→</span>
           </Link>
         </div>
         {counts ? (

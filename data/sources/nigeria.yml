@@ -47,8 +47,9 @@ sources:
     tier: 3
     scope: [national]
     fetch:
-      kind: rss
-      url: "https://dailytrust.com/feed/"
+      kind: api
+      url: "https://dailytrust.com/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
     license: copyrighted
     refresh_interval: null
     enabled: true
@@ -59,8 +60,9 @@ sources:
     tier: 3
     scope: [national]
     fetch:
-      kind: rss
-      url: "https://punchng.com/feed/"
+      kind: api
+      url: "https://punchng.com/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
     license: copyrighted
     refresh_interval: null
     enabled: true
@@ -71,8 +73,9 @@ sources:
     tier: 2
     scope: [national]
     fetch:
-      kind: rss
-      url: "https://dubawa.org/feed/"
+      kind: api
+      url: "https://dubawa.org/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
     license: copyrighted
     refresh_interval: null
     enabled: true
@@ -83,8 +86,9 @@ sources:
     tier: 2
     scope: [national]
     fetch:
-      kind: rss
-      url: "https://factcheckhub.com/feed/"
+      kind: api
+      url: "https://factcheckhub.com/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
     license: copyrighted
     refresh_interval: null
     enabled: true
@@ -136,8 +140,9 @@ sources:
     tier: 3
     scope: [national]
     fetch:
-      kind: rss
-      url: "https://nigeriahealthwatch.com/feed/"
+      kind: api
+      url: "https://nigeriahealthwatch.com/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
     license: copyrighted
     refresh_interval: null
     enabled: true
@@ -148,8 +153,9 @@ sources:
     tier: 1
     scope: [national]
     fetch:
-      kind: rss
-      url: "https://nema.gov.ng/feed"
+      kind: api
+      url: "https://nema.gov.ng/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
     license: public
     refresh_interval: null
     enabled: true

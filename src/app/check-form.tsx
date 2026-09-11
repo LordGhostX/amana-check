@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type SubmitEvent } from "react";
 import type { AnswerTimings, AnswerVersionInfo } from "@/lib/pipeline/answer";
 import type { ResolvedLocation } from "@/lib/locale/precedence";
 import type { AnswerPayload } from "@/lib/trust/types";
@@ -88,7 +88,7 @@ export function CheckForm() {
     return () => window.cancelAnimationFrame(frame);
   }, [state]);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = text.trim();
     if (trimmed.length < 3 || state === "loading") return;
