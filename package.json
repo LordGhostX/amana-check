@@ -26,6 +26,7 @@
     "check:pipeline": "bun run scripts/check-pipeline.ts"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "cheerio": "^1.2.0",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
