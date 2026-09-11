@@ -1,4 +1,5 @@
 import { XMLParser } from "fast-xml-parser";
+import { htmlToInlineText } from "./clean";
 import { ACCEPT_XML, fetchText } from "./fetch";
 
 export interface FeedItem {
@@ -66,7 +67,7 @@ export function parseFeed(xml: string): FeedItem[] {
   for (const raw of rawItems) {
     if (!raw || typeof raw !== "object") continue;
     const item = raw as Record<string, unknown>;
-    const title = textOf(item.title) || "(untitled)";
+    const title = htmlToInlineText(textOf(item.title)) || "(untitled)";
     const link = linkOf(item.link) || textOf(item.guid) || textOf(item.id);
     if (!link) continue;
     const publishedAt = dateOf(

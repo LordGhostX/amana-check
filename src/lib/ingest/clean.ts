@@ -17,3 +17,7 @@ export function htmlToText(html: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+export function htmlToInlineText(html: string): string {
+  return htmlToText(html).replace(/\s+/g, " ").trim();
+}
