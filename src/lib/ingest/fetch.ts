@@ -1,11 +1,11 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { optionalEnv } from "@/lib/env";
+import { SITE_URL } from "@/lib/site";
 
 const execFileAsync = promisify(execFile);
 
-export const INGEST_USER_AGENT =
-  "AmanaCheck/0.1 (+https://amana-check.vercel.app; ingestion)";
+export const INGEST_USER_AGENT = `AmanaCheck/0.1 (+${SITE_URL}; ingestion)`;
 export const ACCEPT_XML =
   "application/rss+xml, application/atom+xml, application/xml, text/xml, */*";
 export const ACCEPT_JSON = "application/json, application/*+json, */*";

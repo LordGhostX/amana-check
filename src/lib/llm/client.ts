@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseModelChain, requireEnv } from "@/lib/env";
+import { SITE_URL } from "@/lib/site";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -140,7 +141,7 @@ export async function callStructured<T>(
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://amana-check.vercel.app",
+          "HTTP-Referer": SITE_URL,
           "X-OpenRouter-Title": "Amana Check",
         },
         signal: controller.signal,
