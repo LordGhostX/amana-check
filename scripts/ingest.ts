@@ -1,4 +1,5 @@
 import { pgClient } from "@/lib/db";
+import { closeIngestLockClient } from "@/lib/ingest/lock";
 import { ingestSources } from "@/lib/ingest/run";
 
 function arg(name: string): string | undefined {
@@ -8,18 +9,24 @@ function arg(name: string): string | undefined {
 
 async function main() {
   const limitRaw = arg("limit");
+  const concurrencyRaw = arg("concurrency");
   const summary = await ingestSources({
     sourceId: arg("source"),
     country: arg("country")?.toUpperCase(),
     limitPerSource: limitRaw ? Number(limitRaw) : undefined,
+    sourceConcurrency: concurrencyRaw ? Number(concurrencyRaw) : undefined,
   });
   console.log(JSON.stringify(summary, null, 2));
 }
 
 main()
-  .then(() => pgClient.end())
+  .then(async () => {
+    await closeIngestLockClient();
+    await pgClient.end();
+  })
   .catch(async (error) => {
     console.error(error);
+    await closeIngestLockClient();
     await pgClient.end();
     process.exit(1);
   });

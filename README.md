@@ -37,7 +37,7 @@ Requires [Bun](https://bun.sh) and a local Postgres.
 bun install
 createdb amana_check
 cp .env.example .env
-# then set OPENROUTER_API_KEY, APP_SECRET, and ADMIN_PASSCODE
+# then set OPENROUTER_API_KEY, APP_SECRET, ADMIN_PASSCODE, and CRON_SECRET
 bun run db:setup
 bun run ingest
 bun run dev
@@ -45,35 +45,42 @@ bun run dev
 
 `db:setup` runs `db:migrate` then `db:seed`. Both are idempotent, so it is safe to repeat. Generate `APP_SECRET` with `openssl rand -hex 32`. Ingestion is a separate step because it fetches the corpus over the network.
 
+`DATABASE_URL_UNPOOLED` is required for ingestion because the overlap lock needs a direct Postgres session. For local Postgres, keep it equal to `DATABASE_URL`; in Vercel, set it to Neon’s direct connection string.
+
 Ingestion falls back to `curl` for feeds that block other HTTP clients, including the ReliefWeb country feeds. curl ships with macOS and GitHub Ubuntu runners. Set `INGEST_CURL_FALLBACK=0` to disable the fallback and fail fast.
+
+The Vercel Node runtime may not include the optional `curl` binary. A source that needs that fallback is recorded as failed for that run; use a publisher API or a runtime with curl available when that source must be covered in production.
 
 ## Deploy
 
-`vercel.json` sets the build command to `bun run db:setup && bun run build`, so each deploy migrates and seeds before building. Set `DATABASE_URL` to the pooled Neon connection and `DATABASE_URL_UNPOOLED` to the direct one; migrations use the direct connection. Run `bun run ingest` once against Neon, and again whenever you want a fresh corpus.
+`vercel.json` sets the build command to `bun run db:setup && bun run build`, then registers twelve production cron entries two hours apart. Each entry calls the authenticated `/api/cron/ingest` route; the route shuffles sources, processes four at a time, and returns its duration and counts. Set `DATABASE_URL` to the pooled Neon connection, `DATABASE_URL_UNPOOLED` to the direct one for migrations and ingestion locking, and `CRON_SECRET` to a random value in Vercel Production. Run `bun run ingest` locally whenever you want to refresh the corpus by hand.
+
+Hobby cron entries can run once per day and may arrive anywhere inside the scheduled hour, so the twelve-entry schedule approximates a two-hour refresh. Pro projects can replace them with one `0 */2 * * *` entry for per-minute scheduling precision. Cron jobs run only on production deployments. To test the route locally, start the app and send `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/ingest`.
 
 ## Scripts
 
-| Command                  | What it does                                                                      |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| `bun run dev`            | Start the app                                                                     |
-| `bun run start`          | Run `db:setup`, then start the production build                                   |
-| `bun run build`          | Production build                                                                  |
-| `bun run typecheck`      | `next typegen` then `tsc --noEmit`                                                |
-| `bun run lint`           | ESLint                                                                            |
-| `bun run format`         | Format with Prettier                                                              |
-| `bun run format:check`   | Verify formatting with Prettier                                                   |
-| `bun run db:generate`    | Generate Drizzle migrations from the schema                                       |
-| `bun run db:migrate`     | Apply migrations                                                                  |
-| `bun run db:push`        | Push the schema directly to the database                                          |
-| `bun run db:seed`        | Load region registries, sources, and referrals from `data/`                       |
-| `bun run db:setup`       | Run `db:migrate` then `db:seed`                                                   |
-| `bun run db:studio`      | Drizzle Studio                                                                    |
-| `bun run ingest`         | Fetch enabled sources into the corpus (flags: `--source`, `--country`, `--limit`) |
-| `bun run ask`            | Run the full pipeline on a claim (flags: `--ng`, `--ke`, `--fresh`)               |
-| `bun run eval`           | Run the eval harness and write `eval/results/latest.json`                         |
-| `bun run check:llm`      | Verify the fail-closed OpenRouter path                                            |
-| `bun run check:pipeline` | Run extraction, retrieval, and the freshness gate on a sample claim               |
-| `bun run red-team`       | Run static privacy checks and live adversarial claims                             |
+| Command                  | What it does                                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `bun run dev`            | Start the app                                                                                      |
+| `bun run start`          | Run `db:setup`, then start the production build                                                    |
+| `bun run build`          | Production build                                                                                   |
+| `bun run typecheck`      | `next typegen` then `tsc --noEmit`                                                                 |
+| `bun run lint`           | ESLint                                                                                             |
+| `bun run test`           | Run the ingestion adapter behavior tests                                                           |
+| `bun run format`         | Format with Prettier                                                                               |
+| `bun run format:check`   | Verify formatting with Prettier                                                                    |
+| `bun run db:generate`    | Generate Drizzle migrations from the schema                                                        |
+| `bun run db:migrate`     | Apply migrations                                                                                   |
+| `bun run db:push`        | Push the schema directly to the database                                                           |
+| `bun run db:seed`        | Load region registries, sources, and referrals from `data/`                                        |
+| `bun run db:setup`       | Run `db:migrate` then `db:seed`                                                                    |
+| `bun run db:studio`      | Drizzle Studio                                                                                     |
+| `bun run ingest`         | Fetch enabled sources into the corpus (flags: `--source`, `--country`, `--limit`, `--concurrency`) |
+| `bun run ask`            | Run the full pipeline on a claim (flags: `--ng`, `--ke`, `--fresh`)                                |
+| `bun run eval`           | Run the eval harness and write `eval/results/latest.json`                                          |
+| `bun run check:llm`      | Verify the fail-closed OpenRouter path                                                             |
+| `bun run check:pipeline` | Run extraction, retrieval, and the freshness gate on a sample claim                                |
+| `bun run red-team`       | Run static privacy checks and live adversarial claims                                              |
 
 ## Docs
 

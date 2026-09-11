@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "bun run db:setup && next start",
     "lint": "eslint",
+    "test": "bun test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typegen": "next typegen",

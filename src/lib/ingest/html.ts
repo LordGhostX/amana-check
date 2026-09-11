@@ -17,9 +17,11 @@ export interface HtmlItem {
 }
 
 export interface HtmlFetchResult {
-  items: HtmlItem[];
   errors: string[];
+  itemsFound: number;
 }
+
+export type HtmlItemHandler = (item: HtmlItem) => Promise<void> | void;
 
 const MAX_ITEMS_DEFAULT = 10;
 const MIN_TEXT_LENGTH = 120;
@@ -210,6 +212,7 @@ function extractItem(
  */
 export async function fetchHtmlItems(
   source: HtmlIngestSource,
+  onItem: HtmlItemHandler,
 ): Promise<HtmlFetchResult> {
   const config = source.fetchConfig ?? {};
   const listingMode = Boolean(config.listSelector || config.linkPattern);
@@ -221,16 +224,27 @@ export async function fetchHtmlItems(
 
   if (!listingMode) {
     const item = extractItem($, source.url, config);
-    return item.text.length >= MIN_TEXT_LENGTH
-      ? { items: [item], errors: [] }
-      : { items: [], errors: [] };
+    if (item.text.length < MIN_TEXT_LENGTH) {
+      return { errors: [], itemsFound: 0 };
+    }
+    try {
+      await onItem(item);
+      return { errors: [], itemsFound: 1 };
+    } catch (error) {
+      return {
+        errors: [
+          `${item.link}: ${error instanceof Error ? error.message : String(error)}`,
+        ],
+        itemsFound: 1,
+      };
+    }
   }
 
   const links = parseListing($, source.url, config);
-  const items: HtmlItem[] = [];
   const errors: string[] = [];
+  let itemsFound = 0;
 
-  for (const link of links) {
+  for (const [index, link] of links.entries()) {
     try {
       const pageHtml = await fetchText(link.url, {
         accept: ACCEPT_HTML,
@@ -239,15 +253,22 @@ export async function fetchHtmlItems(
       const page = cheerio.load(pageHtml);
       const item = extractItem(page, link.url, config, link.title);
       if (item.text.length >= MIN_TEXT_LENGTH) {
-        items.push(item);
+        itemsFound += 1;
+        try {
+          await onItem(item);
+        } catch (error) {
+          errors.push(
+            `${item.link}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
       }
     } catch (error) {
       errors.push(
         `${link.url}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
-    await sleep(ITEM_DELAY_MS);
+    if (index < links.length - 1) await sleep(ITEM_DELAY_MS);
   }
 
-  return { items, errors };
+  return { errors, itemsFound };
 }

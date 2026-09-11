@@ -105,6 +105,6 @@ A messy forwarded Hausa message is pasted with no setup. The answer comes back n
 ## Known limitations
 
 - Stored content can identify the person who wrote it even though it is unlinked.
-- Ingestion runs on demand. A scheduler is deferred, and the adapters and registry are built.
+- Ingestion runs through the production cron route every two hours using twelve Hobby-compatible entries; local runs remain available through `bun run ingest`.
 - Yoruba, Igbo, and Hausa output is machine-generated, label-guided, and not yet reviewed by native speakers.
 - Keyword full-text search misses some paraphrases. The eval harness measures recall, and the limitation is not hidden.

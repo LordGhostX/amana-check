@@ -24,7 +24,7 @@ Curated civic glossary. Short reviewed term lists per language for words such as
 
 ## Coverage and data
 
-Scheduled ingestion. Per-source `refresh_interval` fields exist in the registry but no scheduler is wired. GitHub Actions cron or an always-on worker could refresh priority feeds every 15 minutes, the rest hourly, and PDFs daily. The freshness gate already refuses verdicts when runs fail, so a scheduler only improves coverage.
+Per-source ingestion schedules. Production currently runs the full corpus every two hours through Vercel Cron. The existing `refresh_interval` fields could later let a worker refresh priority feeds more often, leave slower sources on the two-hour cadence, and reserve daily work for PDFs without increasing every source's request load.
 
 PDF adapter. The HTML adapter serves NCDC, INEC, IEBC, and Kenya Met. A PDF adapter would make situation reports available when they are published only as PDFs.
 
