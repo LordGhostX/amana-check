@@ -158,7 +158,7 @@ export function CheckForm() {
             </div>
           </div>
           <span className="hidden items-center gap-2 text-xs font-medium text-muted sm:flex">
-            <span className="size-1.5 rounded-full bg-emerald-500" />
+            <span className="size-2 rounded-full bg-accent shadow-[0_0_0_3px_rgba(217,247,95,0.12)]" />
             No account required
           </span>
         </div>

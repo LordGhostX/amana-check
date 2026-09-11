@@ -3,6 +3,10 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { AnswerPayload, AnswerStatus } from "@/lib/trust/types";
 import type { AnswerVersionInfo } from "@/lib/pipeline/answer";
+import {
+  getEvidenceReferences,
+  type EvidenceReferences,
+} from "@/lib/trust/references";
 
 const STATUS_META: Record<
   AnswerStatus,
@@ -79,10 +83,6 @@ function stripCitations(value: string): string {
     .trim();
 }
 
-function citationRefs(value: string): number[] {
-  return Array.from(value.matchAll(/\[S(\d+)\]/g), (match) => Number(match[1]));
-}
-
 function formatShareDate(value: string): string {
   return new Date(value).toLocaleString(undefined, {
     day: "numeric",
@@ -102,40 +102,36 @@ function formatDuration(durationMs: number): string {
   return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
 }
 
-function renderCitations(value: string): ReactNode[] {
+function renderCitations(
+  value: string,
+  numberByCitation: Map<number, number>,
+): ReactNode[] {
   const parts = value.split(/(\[S\d+\])/g);
   return parts.map((part, index) => {
     const match = part.match(/^\[S(\d+)\]$/);
     if (!match) return part;
+    const sourceNumber = numberByCitation.get(Number(match[1]));
+    if (sourceNumber === undefined) return part;
     return (
       <a
         key={`${part}-${index}`}
-        href={`#evidence-${match[1]}`}
+        href={`#evidence-${sourceNumber}`}
         className="ml-1 inline-flex min-w-5 items-center justify-center rounded bg-brand-soft px-1 font-mono text-[0.7rem] font-semibold text-brand-strong no-underline"
-        aria-label={`See evidence source ${match[1]}`}
+        aria-label={`See evidence source ${sourceNumber}`}
       >
-        {match[1]}
+        {sourceNumber}
       </a>
     );
   });
 }
 
-function buildShareText(payload: AnswerPayload): string {
+function buildShareText(
+  payload: AnswerPayload,
+  references: EvidenceReferences,
+): string {
   const meta = STATUS_META[payload.status];
-  const citedIndexes = Array.from(
-    new Set(
-      [...payload.whatWeKnow, ...payload.whatWeDontKnow].flatMap(citationRefs),
-    ),
-  )
-    .map((reference) => reference - 1)
-    .filter((index) => index >= 0 && index < payload.evidence.length);
-  const sourceIndexes =
-    citedIndexes.length > 0
-      ? citedIndexes
-      : payload.evidence.slice(0, 3).map((_, index) => index);
-  const sourceLines = sourceIndexes.flatMap((sourceIndex, listIndex) => {
-    const item = payload.evidence[sourceIndex]!;
-    const heading = `${listIndex + 1}. ${item.publisher}: ${item.title} (${formatDate(item.publishedAt)})`;
+  const sourceLines = references.items.flatMap(({ item, number }) => {
+    const heading = `${number}. ${item.publisher}: ${item.title} (${formatDate(item.publishedAt)})`;
     return /^https?:\/\//i.test(item.url)
       ? [heading, `   ${item.url}`]
       : [heading];
@@ -180,7 +176,14 @@ export function AnswerCard({
     "idle" | "sending" | "sent" | "error"
   >("idle");
   const meta = STATUS_META[payload.status];
-  const shareText = useMemo(() => buildShareText(payload), [payload]);
+  const evidenceReferences = useMemo(
+    () => getEvidenceReferences(payload),
+    [payload],
+  );
+  const shareText = useMemo(
+    () => buildShareText(payload, evidenceReferences),
+    [payload, evidenceReferences],
+  );
 
   async function copyShare() {
     try {
@@ -273,7 +276,10 @@ export function AnswerCard({
               <ul className="mt-3 flex flex-col gap-3">
                 {payload.whatWeKnow.map((bullet, index) => (
                   <li key={index} className="text-sm leading-6 text-foreground">
-                    {renderCitations(bullet)}
+                    {renderCitations(
+                      bullet,
+                      evidenceReferences.numberByCitation,
+                    )}
                   </li>
                 ))}
               </ul>
@@ -291,7 +297,10 @@ export function AnswerCard({
               <ul className="mt-3 flex flex-col gap-3">
                 {payload.whatWeDontKnow.map((bullet, index) => (
                   <li key={index} className="text-sm leading-6 text-muted">
-                    {stripCitations(bullet)}
+                    {renderCitations(
+                      bullet,
+                      evidenceReferences.numberByCitation,
+                    )}
                   </li>
                 ))}
               </ul>
@@ -299,7 +308,7 @@ export function AnswerCard({
           ) : null}
         </div>
 
-        {payload.evidence.length > 0 ? (
+        {evidenceReferences.items.length > 0 ? (
           <section className="mt-7">
             <div className="flex items-end justify-between gap-4">
               <div>
@@ -311,24 +320,24 @@ export function AnswerCard({
                 </h3>
               </div>
               <span className="font-mono text-xs text-muted">
-                {payload.evidence.length} source
-                {payload.evidence.length === 1 ? "" : "s"}
+                {evidenceReferences.items.length} source
+                {evidenceReferences.items.length === 1 ? "" : "s"}
               </span>
             </div>
             <div className="mt-4 flex flex-col gap-3">
-              {payload.evidence.map((item, index) => {
+              {evidenceReferences.items.map(({ item, number }) => {
                 const sourceUrl = /^https?:\/\//i.test(item.url)
                   ? item.url
                   : null;
                 return (
                   <details
-                    key={`${item.documentId}-${index}`}
-                    id={`evidence-${index + 1}`}
+                    key={item.documentId}
+                    id={`evidence-${number}`}
                     className="group rounded-2xl border border-line bg-background px-4 py-3 open:bg-surface"
                   >
                     <summary className="flex cursor-pointer list-none items-center gap-3 text-sm text-ink marker:hidden">
                       <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-brand-soft font-mono text-xs font-semibold text-brand-strong">
-                        {index + 1}
+                        {number}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="font-semibold">{item.publisher}</span>
