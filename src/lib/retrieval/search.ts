@@ -12,8 +12,6 @@ export interface RetrievedChunk {
   chunkId: number;
   documentId: string;
   content: string;
-  page: number | null;
-  anchor: string | null;
   title: string;
   url: string;
   publisher: string;
@@ -50,8 +48,6 @@ interface RawChunkRow {
   chunk_id: number | string;
   document_id: string;
   content: string;
-  page: number | null;
-  anchor: string | null;
   title: string;
   url: string;
   publisher: string;
@@ -121,8 +117,6 @@ export async function searchEvidence(
       c.id AS chunk_id,
       c.document_id,
       c.content,
-      c.page,
-      c.anchor,
       d.title,
       d.url,
       d.published_at,
@@ -191,8 +185,6 @@ export async function searchEvidence(
         chunkId: Number(row.chunk_id),
         documentId: String(row.document_id),
         content,
-        page: row.page == null ? null : Number(row.page),
-        anchor: row.anchor == null ? null : String(row.anchor),
         title,
         url: String(row.url),
         publisher: String(row.publisher),

@@ -1,8 +1,6 @@
 export interface TextChunk {
   ordinal: number;
   content: string;
-  page: number | null;
-  anchor: string | null;
 }
 
 export interface ChunkOptions {
@@ -65,7 +63,5 @@ export function chunkText(
   return rawChunks.slice(0, maxChunks).map((content, ordinal) => ({
     ordinal,
     content,
-    page: null,
-    anchor: null,
   }));
 }

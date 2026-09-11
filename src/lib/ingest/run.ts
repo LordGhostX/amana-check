@@ -117,8 +117,6 @@ async function insertChunks(tx: Tx, documentId: string, text: string) {
       documentId,
       ordinal: chunk.ordinal,
       content: chunk.content,
-      page: chunk.page,
-      anchor: chunk.anchor,
     })),
   );
 }

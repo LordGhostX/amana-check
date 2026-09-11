@@ -38,7 +38,7 @@ T1 alone can support a verdict. A contested claim can also reach a verdict with 
 4. Weight term coverage by inverse document frequency, so rare terms such as Garissa, Benue, or cholera count more than common terms such as Kenya or county.
 5. Reject candidates below an IDF-weighted coverage floor of 0.3, or with fewer than two matched terms on queries of three or more terms. This keeps an off-topic official article from counting as evidence.
 6. Score the survivors: relevance (weight 3) plus locality (1.2), source tier (0.5), and recency (0.6). Relevance dominates, so tier and freshness cannot promote an off-topic document.
-7. Return the top eight chunks with page and anchor information.
+7. Return the top eight chunks with their document and source metadata.
 
 ## Evidence gate
 

@@ -117,8 +117,6 @@ export const documentChunks = pgTable(
       .references(() => documents.id, { onDelete: "cascade" }),
     ordinal: integer("ordinal").notNull(),
     content: text("content").notNull(),
-    page: integer("page"),
-    anchor: text("anchor"),
   },
   (t) => [
     index("chunks_search_idx").using(

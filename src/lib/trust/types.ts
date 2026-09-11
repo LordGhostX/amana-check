@@ -48,8 +48,6 @@ export interface EvidenceItem {
   publishedAt?: string | null;
   fetchedAt: string;
   excerpt?: string;
-  page?: number | null;
-  anchor?: string | null;
 }
 
 export interface NextStep {

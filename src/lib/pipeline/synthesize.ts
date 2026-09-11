@@ -84,8 +84,6 @@ function toEvidenceItem(chunk: RetrievedChunk): EvidenceItem {
     publishedAt: chunk.publishedAt?.toISOString() ?? null,
     fetchedAt: chunk.fetchedAt.toISOString(),
     excerpt: truncate(chunk.content, 240),
-    page: chunk.page,
-    anchor: chunk.anchor,
   };
 }
 

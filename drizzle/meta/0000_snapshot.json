@@ -1,5 +1,5 @@
 {
-  "id": "fae2a6b2-d50a-4ccd-af6a-4ba5121e7945",
+  "id": "5c1b2924-4f12-46a3-b519-2ec639ccaa56",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -375,18 +375,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "page": {
-          "name": "page",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "anchor": {
-          "name": "anchor",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {

@@ -73,7 +73,7 @@ CALL 1 → { detected_lang, confidence, claim_text, claim_type, sensitivity,
 DETERMINISTIC RETRIEVAL
   score = IDF-weighted relevance + locality boost + source-tier boost + freshness boost
   (terms joined with OR; rare terms dominate; off-topic chunks are filtered out)
-  → top chunks with page/anchor
+  → top chunks with document and source metadata
 
 CALL 2 → synthesis in detected_lang over top evidence only, strict citation JSON
 
@@ -83,7 +83,7 @@ client-side and never sent to the server.
 
 ## Data model
 
-`regions` · `sources` (`refresh_interval`, fetch config and health) · `documents` · `document_chunks` (tsvector, page/anchor) · `document_versions` · `ingestion_runs` · `claims` (de-identified, no join keys) · `answers` + `answer_versions` · `referrals` · `events` (aggregate only) · `feedback` · `rate_limits` · `llm_calls`.
+`regions` · `sources` (`refresh_interval`, fetch config and health) · `documents` · `document_chunks` (searchable text) · `document_versions` · `ingestion_runs` · `claims` (de-identified, no join keys) · `answers` + `answer_versions` · `referrals` · `events` (aggregate only) · `feedback` · `rate_limits` · `llm_calls`.
 
 ## Phases
 

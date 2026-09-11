@@ -48,9 +48,7 @@ CREATE TABLE "document_chunks" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"document_id" text NOT NULL,
 	"ordinal" integer NOT NULL,
-	"content" text NOT NULL,
-	"page" integer,
-	"anchor" text
+	"content" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "document_versions" (
