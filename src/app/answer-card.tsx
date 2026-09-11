@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { AnswerPayload, AnswerStatus } from "@/lib/trust/types";
 import type { AnswerVersionInfo } from "@/lib/pipeline/answer";
+import { withUtmSource } from "@/lib/links";
 import {
   getEvidenceReferences,
   sourceNumbersFor,
@@ -135,7 +136,7 @@ function buildShareText(
   const sourceLines = references.items.flatMap(({ item, number }) => {
     const heading = `${number}. ${item.publisher}: ${item.title} (${formatDate(item.publishedAt)})`;
     return /^https?:\/\//i.test(item.url)
-      ? [heading, `   ${item.url}`]
+      ? [heading, `   ${withUtmSource(item.url)}`]
       : [heading];
   });
 
@@ -328,7 +329,7 @@ export function AnswerCard({
             <div className="mt-4 flex flex-col gap-3">
               {evidenceReferences.items.map(({ item, number }) => {
                 const sourceUrl = /^https?:\/\//i.test(item.url)
-                  ? item.url
+                  ? withUtmSource(item.url)
                   : null;
                 return (
                   <details

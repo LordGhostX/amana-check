@@ -15,8 +15,8 @@ export interface Requirement {
  * official primary source.
  */
 export const REQUIREMENTS: Record<ClaimType, Requirement> = {
-  security_incident: { windowMs: 2 * HOUR_MS, minTier1: 1, minTier2: 2 },
-  flood_weather: { windowMs: 6 * HOUR_MS, minTier1: 1, minTier2: 99 },
+  security_incident: { windowMs: 4 * HOUR_MS, minTier1: 1, minTier2: 2 },
+  flood_weather: { windowMs: 12 * HOUR_MS, minTier1: 1, minTier2: 99 },
   health_outbreak: { windowMs: 24 * HOUR_MS, minTier1: 1, minTier2: 2 },
   payment_service_scam: { windowMs: 72 * HOUR_MS, minTier1: 1, minTier2: 1 },
   civic_process: { windowMs: 7 * DAY_MS, minTier1: 1, minTier2: 99 },

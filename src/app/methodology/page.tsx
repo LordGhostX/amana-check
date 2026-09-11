@@ -51,10 +51,10 @@ const STATUSES = [
 const WINDOWS = [
   [
     "Security incident",
-    "2 hours",
+    "4 hours",
     "1 official source, or 2 independent T2 sources",
   ],
-  ["Flood or weather warning", "6 hours", "1 official source"],
+  ["Flood or weather warning", "12 hours", "1 official source"],
   [
     "Health outbreak",
     "24 hours",

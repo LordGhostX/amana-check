@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { referrals } from "@/lib/db/schema";
+import { withUtmSource } from "@/lib/links";
 
 export const dynamic = "force-dynamic";
 
@@ -130,7 +131,7 @@ export default async function HelpPage() {
                         ) : null}
                         {row.url ? (
                           <a
-                            href={row.url}
+                            href={withUtmSource(row.url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-4 inline-flex items-center gap-1 font-semibold text-brand-strong underline decoration-brand/30 underline-offset-4"
