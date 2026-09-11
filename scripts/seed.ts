@@ -7,6 +7,7 @@ import {
   loadSourceFile,
   type CountrySlug,
 } from "@/lib/registry/load";
+import { advanceCorpusRevision } from "@/lib/retrieval/corpus";
 
 const SLUGS: CountrySlug[] = ["nigeria", "kenya"];
 
@@ -148,10 +149,21 @@ async function main() {
   }
 
   if (seededSourceIds.length > 0) {
-    const prunedSources = await db
-      .delete(sources)
-      .where(notInArray(sources.id, seededSourceIds))
-      .returning({ id: sources.id });
+    const prunedSources = await db.transaction(async (tx) => {
+      const candidates = await tx
+        .select({ id: sources.id, country: sources.country })
+        .from(sources)
+        .where(notInArray(sources.id, seededSourceIds));
+      if (candidates.length === 0) return candidates;
+
+      await tx.delete(sources).where(notInArray(sources.id, seededSourceIds));
+      for (const country of new Set(
+        candidates.map((source) => source.country),
+      )) {
+        await advanceCorpusRevision(tx, country);
+      }
+      return candidates;
+    });
     if (prunedSources.length > 0) {
       console.log(
         `Pruned ${prunedSources.length} source(s) no longer in the registries (documents cascade).`,

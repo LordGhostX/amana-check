@@ -9,6 +9,7 @@ import {
   sources,
 } from "@/lib/db/schema";
 import { cleanupExpired } from "@/lib/maintenance";
+import { advanceCorpusRevision } from "@/lib/retrieval/corpus";
 import { chunkText } from "./chunk";
 import { htmlToText } from "./clean";
 import { fetchHtmlItems, type HtmlItem } from "./html";
@@ -167,6 +168,7 @@ async function upsertDocument(
         version: 1,
       });
       await insertChunks(tx, id, item.text);
+      await advanceCorpusRevision(tx, source.country);
       return "added" as const;
     }
 
@@ -175,6 +177,7 @@ async function upsertDocument(
         .update(documents)
         .set({ fetchedAt: now, title })
         .where(eq(documents.id, id));
+      await advanceCorpusRevision(tx, source.country);
       return "unchanged" as const;
     }
 
@@ -205,6 +208,7 @@ async function upsertDocument(
       })
       .where(eq(documents.id, id));
     await insertChunks(tx, id, item.text);
+    await advanceCorpusRevision(tx, source.country);
     return "updated" as const;
   });
 }

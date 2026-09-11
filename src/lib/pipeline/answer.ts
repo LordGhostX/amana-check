@@ -7,7 +7,11 @@ import {
   type LocationSource,
   type ResolvedLocation,
 } from "@/lib/locale/precedence";
-import { corpusNewest } from "@/lib/retrieval/corpus";
+import {
+  corpusNewest,
+  corpusRevision,
+  corpusScopeFor,
+} from "@/lib/retrieval/corpus";
 import { searchEvidence, type RetrievedChunk } from "@/lib/retrieval/search";
 import { categoriesForClaimType, referralsFor } from "@/lib/referrals/lookup";
 import {
@@ -18,7 +22,12 @@ import {
 import type { AnswerPayload, AnswerStatus, ClaimType } from "@/lib/trust/types";
 import { clusterKeyFor, recordVerificationDemand } from "./events";
 import { extractClaim, fallbackExtraction } from "./extract";
-import { canUseCachedAnswer, claimHashFor } from "./cache";
+import {
+  cacheTtlMs,
+  canUseCachedAnswer,
+  claimHashFor,
+  isCacheFresh,
+} from "./cache";
 import type { Extraction } from "./schemas";
 import { synthesizeAnswer } from "./synthesize";
 
@@ -164,11 +173,14 @@ async function loadVersions(answerId: number): Promise<AnswerVersionInfo[]> {
   }));
 }
 
-function cachedAssessment(payload: AnswerPayload): EvidenceAssessment {
+function cachedAssessment(
+  payload: AnswerPayload,
+  claimType: ClaimType,
+): EvidenceAssessment {
   return {
     status: payload.status,
     reason: payload.statusReason,
-    windowMs: 0,
+    windowMs: cacheTtlMs(claimType),
     newestEvidenceAt: null,
     stale: payload.status === "not_confirmed_stale",
   };
@@ -181,6 +193,67 @@ function cachedLocation(payload: AnswerPayload): ResolvedLocation {
     regionCode: payload.location.regionCode,
     regionName: payload.location.label,
     source: "cache",
+  };
+}
+
+interface StableEvidenceResult {
+  evidence: RetrievedChunk[];
+  newest: Date | null;
+  corpusRevision: number;
+  evidenceSearchMs: number;
+  corpusFreshnessMs: number;
+}
+
+const MAX_CORPUS_RETRIEVAL_ATTEMPTS = 3;
+
+async function retrieveStableEvidence(input: {
+  query: string;
+  country?: string;
+  regionLabel?: string;
+}): Promise<StableEvidenceResult> {
+  let latest: StableEvidenceResult | null = null;
+  let evidenceSearchMs = 0;
+  let corpusFreshnessMs = 0;
+  let fallbackRevision = 0;
+
+  for (let attempt = 0; attempt < MAX_CORPUS_RETRIEVAL_ATTEMPTS; attempt += 1) {
+    const revisionBeforeStartedAt = Date.now();
+    const revisionBefore = await corpusRevision(input.country);
+    fallbackRevision = revisionBefore;
+    const revisionBeforeMs = Date.now() - revisionBeforeStartedAt;
+    const [evidenceResult, newestResult] = await Promise.all([
+      timed(() =>
+        searchEvidence({
+          query: input.query,
+          country: input.country,
+          regionLabel: input.regionLabel,
+          limit: 8,
+        }),
+      ),
+      timed(() => corpusNewest(input.country)),
+    ]);
+    const revisionAfterStartedAt = Date.now();
+    const revisionAfter = await corpusRevision(input.country);
+    const revisionAfterMs = Date.now() - revisionAfterStartedAt;
+    const [evidence, evidenceMs] = evidenceResult;
+    const [newest, newestMs] = newestResult;
+    evidenceSearchMs += evidenceMs;
+    corpusFreshnessMs += revisionBeforeMs + newestMs + revisionAfterMs;
+    latest = {
+      evidence,
+      newest,
+      corpusRevision: revisionAfter,
+      evidenceSearchMs,
+      corpusFreshnessMs,
+    };
+
+    if (revisionBefore === revisionAfter) return latest;
+  }
+
+  if (!latest) throw new Error("evidence retrieval did not produce a result");
+  return {
+    ...latest,
+    corpusRevision: fallbackRevision,
   };
 }
 
@@ -207,16 +280,23 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
   );
 
   if (!options.bypassCache) {
-    const [cachedRows, cacheLookupMs] = await timed(() =>
-      db
+    const [cacheResult, cacheLookupMs] = await timed(async () => {
+      const cachedRows = await db
         .select()
         .from(answers)
         .where(eq(answers.claimHash, claimHash))
         .orderBy(desc(answers.updatedAt))
-        .limit(1),
-    );
+        .limit(1);
+      const cached = cachedRows[0];
+      return {
+        cached,
+        currentCorpusRevision: cached
+          ? await corpusRevision(cached.corpusScope)
+          : null,
+      };
+    });
     timing.stages.cacheLookupMs = cacheLookupMs;
-    const cached = cachedRows[0];
+    const cached = cacheResult.cached;
     if (cached) {
       const cachedExtraction = await loadCachedExtraction(
         cached.claimId,
@@ -225,6 +305,13 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
         cached.claimType,
       );
       if (
+        isCacheFresh({
+          claimType: cached.claimType,
+          cacheGeneratedAt: cached.cacheGeneratedAt,
+          evidence: cached.payload.evidence,
+          storedCorpusRevision: cached.corpusRevision,
+          currentCorpusRevision: cacheResult.currentCorpusRevision ?? 0,
+        }) &&
         canUseCachedAnswer(cached.reviewState, cachedExtraction.usedFallback)
       ) {
         const persistenceStartedAt = Date.now();
@@ -248,7 +335,7 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
           payload: cached.payload,
           extraction: cachedExtraction.extraction,
           evidence: [],
-          assessment: cachedAssessment(cached.payload),
+          assessment: cachedAssessment(cached.payload, cached.claimType),
           location: cachedLocation(cached.payload),
           versions,
           timing,
@@ -275,17 +362,14 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
     }),
   );
   timing.stages.locationMs = locationMs;
+  const corpusScope = corpusScopeFor(location.country);
 
-  const [evidenceResult, newestResult, referralResult] = await Promise.all([
-    timed(() =>
-      searchEvidence({
-        query: [extraction.english_query, ...extraction.keywords].join(" "),
-        country: location.country,
-        regionLabel: location.regionName ?? extraction.location_hints[0],
-        limit: 8,
-      }),
-    ),
-    timed(() => corpusNewest(location.country)),
+  const [evidenceResult, referralResult] = await Promise.all([
+    retrieveStableEvidence({
+      query: [extraction.english_query, ...extraction.keywords].join(" "),
+      country: location.country,
+      regionLabel: location.regionName ?? extraction.location_hints[0],
+    }),
     timed(() =>
       referralsFor(
         location.country,
@@ -294,8 +378,13 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
       ),
     ),
   ]);
-  const [evidence, evidenceSearchMs] = evidenceResult;
-  const [newest, corpusFreshnessMs] = newestResult;
+  const {
+    evidence,
+    newest,
+    corpusRevision: corpusRevisionAtCheck,
+    evidenceSearchMs,
+    corpusFreshnessMs,
+  } = evidenceResult;
   const [referralRows, referralsMs] = referralResult;
   timing.stages.evidenceSearchMs = evidenceSearchMs;
   timing.stages.corpusFreshnessMs = corpusFreshnessMs;
@@ -334,6 +423,7 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
   );
   timing.stages.synthesisMs = synthesisMs;
 
+  const cacheGeneratedAt = new Date();
   const persistenceStartedAt = Date.now();
   const persisted = await db.transaction(async (tx) => {
     const insertedClaims = await tx
@@ -369,6 +459,9 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
         payload,
         promptVersion: PROMPT_VERSIONS.synthesize,
         version: 1,
+        cacheGeneratedAt,
+        corpusScope,
+        corpusRevision: corpusRevisionAtCheck,
       })
       .onConflictDoUpdate({
         target: [answers.claimHash, answers.lang],
@@ -379,6 +472,13 @@ export async function answerClaim(options: AskOptions): Promise<AskResult> {
           payload,
           promptVersion: PROMPT_VERSIONS.synthesize,
           version: sql`${answers.version} + 1`,
+          cacheGeneratedAt,
+          corpusScope,
+          corpusRevision: corpusRevisionAtCheck,
+          reviewState: "unreviewed",
+          reviewNote: null,
+          reviewedAt: null,
+          reviewer: null,
           updatedAt: new Date(),
         },
       })

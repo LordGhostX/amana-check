@@ -20,6 +20,9 @@ CREATE TABLE "answers" (
 	"payload" jsonb NOT NULL,
 	"prompt_version" text NOT NULL,
 	"version" integer DEFAULT 1 NOT NULL,
+	"cache_generated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"corpus_scope" text DEFAULT 'GLOBAL' NOT NULL,
+	"corpus_revision" integer DEFAULT 0 NOT NULL,
 	"review_state" text DEFAULT 'unreviewed' NOT NULL,
 	"review_note" text,
 	"reviewed_at" timestamp with time zone,
@@ -43,6 +46,12 @@ CREATE TABLE "claims" (
 	"region_code" text,
 	"location_text" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "corpus_revisions" (
+	"scope" text PRIMARY KEY NOT NULL,
+	"revision" integer DEFAULT 0 NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "document_chunks" (

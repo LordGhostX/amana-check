@@ -55,8 +55,8 @@ Zod runs on every response: `JSON.parse`, then Zod, then semantic checks, then a
 
 | Claim type                    | Window | A verdict requires       |
 | ----------------------------- | ------ | ------------------------ |
-| Security incident             | 2h     | 1×T1 or 2 independent T2 |
-| Flood or weather              | 6h     | 1×T1                     |
+| Security incident             | 4h     | 1×T1 or 2 independent T2 |
+| Flood or weather              | 12h    | 1×T1                     |
 | Health outbreak               | 24h    | 1×T1 or 2×T2             |
 | Payment or service scam       | 72h    | 1×T1 or 1×T2             |
 | Civic process or deadline     | 7d     | 1×T1                     |
@@ -77,13 +77,12 @@ DETERMINISTIC RETRIEVAL
 
 CALL 2 → synthesis in detected_lang over top evidence only, strict citation JSON
 
-CACHE by (claim_hash, lang), versioned; "updated since you checked" is computed
-client-side and never sent to the server.
+CACHE by (claim_hash, lang), versioned, bounded by the earlier of the claim freshness window and the newest cached evidence deadline, and invalidated when the relevant corpus revision changes. Every corpus mutation, including unchanged fetch timestamps and source-prune cascades, advances the country and global revisions. "updated since you checked" is computed client-side and never sent to the server. `--fresh` bypasses the cache.
 ```
 
 ## Data model
 
-`regions` · `sources` (`refresh_interval`, fetch config and health) · `documents` · `document_chunks` (searchable text) · `document_versions` · `ingestion_runs` · `claims` (de-identified, no join keys) · `answers` + `answer_versions` · `referrals` · `events` (aggregate only) · `feedback` · `rate_limits` · `llm_calls`.
+`regions` · `sources` (`refresh_interval`, fetch config and health) · `documents` · `document_chunks` (searchable text) · `document_versions` · `corpus_revisions` · `ingestion_runs` · `claims` (de-identified, no join keys) · `answers` + `answer_versions` · `referrals` · `events` (aggregate only) · `feedback` · `rate_limits` · `llm_calls`.
 
 ## Phases
 

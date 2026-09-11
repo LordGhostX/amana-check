@@ -108,6 +108,14 @@ export const documents = pgTable(
   ],
 );
 
+export const corpusRevisions = pgTable("corpus_revisions", {
+  scope: text("scope").primaryKey(),
+  revision: integer("revision").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const documentChunks = pgTable(
   "document_chunks",
   {
@@ -202,6 +210,13 @@ export const answers = pgTable(
     payload: jsonb("payload").$type<AnswerPayload>().notNull(),
     promptVersion: text("prompt_version").notNull(),
     version: integer("version").notNull().default(1),
+    cacheGeneratedAt: timestamp("cache_generated_at", {
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+    corpusScope: text("corpus_scope").notNull().default("GLOBAL"),
+    corpusRevision: integer("corpus_revision").notNull().default(0),
     reviewState: text("review_state").notNull().default("unreviewed"),
     reviewNote: text("review_note"),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
