@@ -18,6 +18,20 @@ The model never receives the corpus. Retrieval shortlists the highest-ranked chu
 
 See [docs/PLAN.md](docs/PLAN.md) for the frozen plan and [docs/constraints-matrix.md](docs/constraints-matrix.md) for the hackathon constraints mapped to code.
 
+## Screenshots
+
+The home page lets people submit a forwarded message or claim in any language and check it against the current corpus.
+
+![Amana Check home page](docs/images/amana-check.png)
+
+Results show the verdict, freshness explanation, cited evidence, and what remains unknown.
+
+![Claim result](docs/images/claim-result.png)
+
+The help page lists verified contact pathways for Nigeria and Kenya.
+
+![Trusted contacts help page](docs/images/help-page.png)
+
 ## License
 
 Amana Check is released under the [MIT License](LICENSE).
