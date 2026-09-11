@@ -34,7 +34,7 @@ const EXAMPLES = [
   ["Flood alert", "NEMA has issued a flood alert for Benue State"],
   [
     "Cash offer",
-    "Dem talk say FG dey give N75,000, make you register with dis link, na true?",
+    "FG dey give N73,941 to every trader in Zangon-Kataf if you register through this WhatsApp link today",
   ],
   ["Health rumor", "Kuna mlipuko wa kipindupindu katika kaunti ya Nairobi"],
 ];

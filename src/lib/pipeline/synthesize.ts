@@ -138,6 +138,12 @@ export function fallbackPayload(
       title: `Contact ${referral.name}`,
       detail: `${referral.phone}${referral.verified ? "" : " (confirm locally)"}${referral.description ? ` — ${referral.description}` : ""}`,
     }));
+  const fallbackUnknown =
+    input.evidence.length === 0
+      ? "No source in the current corpus supports or contradicts this claim, so we cannot confirm or deny it."
+      : problem
+        ? "Amana could not produce a reviewed synthesis, so the bullets above are direct excerpts from the sources, not a verified summary."
+        : "Amana could not run its full synthesis step, so these are direct excerpts from the sources above, not a verified summary.";
 
   return {
     claim: input.extraction.claim_text,
@@ -145,11 +151,7 @@ export function fallbackPayload(
     status: input.assessment.status,
     statusReason: input.assessment.reason,
     whatWeKnow,
-    whatWeDontKnow: [
-      problem
-        ? "Amana could not produce a reviewed synthesis, so the bullets above are direct excerpts from the sources, not a verified summary."
-        : "Amana could not run its full synthesis step, so these are direct excerpts from the sources above, not a verified summary.",
-    ],
+    whatWeDontKnow: [fallbackUnknown],
     evidence: input.evidence.map(toEvidenceItem),
     nextSteps: [
       ...referralSteps,
