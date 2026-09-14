@@ -43,7 +43,7 @@ export default async function Home() {
           <header className="flex flex-col items-start lg:sticky lg:top-28">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand-soft px-3 py-1.5 text-sm font-semibold text-brand-strong">
               <span
-                className="size-2 rounded-full bg-accent shadow-[0_0_0_3px_rgba(217,247,95,0.12)]"
+                className="size-2 rounded-full bg-accent shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.18)]"
                 aria-hidden="true"
               />
               Checking Nigeria and Kenya

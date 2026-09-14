@@ -23,10 +23,8 @@ const STATUS_META: Record<
   verified: {
     label: "Verified",
     description: "Evidence meets the freshness and source requirements.",
-    badgeClass:
-      "bg-emerald-700 text-white dark:bg-emerald-400 dark:text-emerald-950",
-    panelClass:
-      "border-emerald-300 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/50",
+    badgeClass: "bg-emerald-700 text-white",
+    panelClass: "border-emerald-300 bg-emerald-50",
     symbol: "✓",
   },
   developing: {
@@ -34,36 +32,31 @@ const STATUS_META: Record<
     description:
       "Some evidence exists, but not enough to verify. Treat with caution.",
     badgeClass: "bg-amber-500 text-amber-950",
-    panelClass:
-      "border-amber-300 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/50",
+    panelClass: "border-amber-300 bg-amber-50",
     symbol: "~",
   },
   unverified: {
     label: "Not verified",
     description:
       "No supporting or contradicting source was found. The claim is neither confirmed nor denied.",
-    badgeClass: "bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-950",
-    panelClass:
-      "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60",
+    badgeClass: "bg-slate-700 text-white",
+    panelClass: "border-slate-300 bg-slate-50",
     symbol: "?",
   },
   not_confirmed_stale: {
     label: "Not confirmed: evidence too old",
     description:
       "Our sources are older than the freshness window for this kind of claim. Do not read this as safe.",
-    badgeClass:
-      "bg-orange-600 text-white dark:bg-orange-400 dark:text-orange-950",
-    panelClass:
-      "border-orange-300 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/50",
+    badgeClass: "bg-orange-600 text-white",
+    panelClass: "border-orange-300 bg-orange-50",
     symbol: "!",
   },
   unknown_coverage: {
     label: "No coverage yet",
     description:
       "Amana has no ingested sources for this area or topic yet, so it cannot check this claim.",
-    badgeClass: "bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-950",
-    panelClass:
-      "border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60",
+    badgeClass: "bg-slate-700 text-white",
+    panelClass: "border-slate-300 bg-slate-50",
     symbol: "?",
   },
 };
@@ -217,7 +210,7 @@ export function AnswerCard({
     <article
       lang={payload.answerLang}
       translate="no"
-      className="overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_24px_70px_-40px_rgba(17,37,31,0.5)]"
+      className="overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_24px_70px_-40px_rgb(var(--panel-rgb)/0.2)]"
     >
       <header className={`border-b p-5 sm:p-6 ${meta.panelClass}`}>
         <div className="flex items-start gap-4">
@@ -250,7 +243,7 @@ export function AnswerCard({
         </div>
 
         {updatedSince ? (
-          <p className="mt-4 rounded-xl border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-200">
+          <p className="mt-4 rounded-xl border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900">
             This answer changed since your last check.
           </p>
         ) : null}
@@ -412,7 +405,7 @@ export function AnswerCard({
           <button
             type="button"
             onClick={copyShare}
-            className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#095343]"
+            className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
           >
             {copied ? "Copied to clipboard" : "Copy sourced summary"}
           </button>
@@ -441,14 +434,10 @@ export function AnswerCard({
             </button>
           ))}
           {feedbackState === "sent" ? (
-            <span className="font-medium text-emerald-700 dark:text-emerald-400">
-              Thanks.
-            </span>
+            <span className="font-medium text-emerald-700">Thanks.</span>
           ) : null}
           {feedbackState === "error" ? (
-            <span className="text-red-700 dark:text-red-400">
-              Could not send.
-            </span>
+            <span className="text-red-700">Could not send.</span>
           ) : null}
         </div>
 

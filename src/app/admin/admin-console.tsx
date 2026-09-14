@@ -58,10 +58,10 @@ export function AdminConsole({
           <div
             role={notice.kind === "error" ? "alert" : "status"}
             aria-live={notice.kind === "error" ? "assertive" : "polite"}
-            className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm shadow-[0_18px_45px_-24px_rgba(17,37,31,0.7)] ${
+            className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm shadow-[0_18px_45px_-24px_rgb(var(--panel-rgb)/0.28)] ${
               notice.kind === "success"
                 ? "border-brand/30 bg-brand-soft text-ink"
-                : "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/70 dark:text-red-200"
+                : "border-red-300 bg-red-50 text-red-800"
             }`}
           >
             <span
@@ -83,7 +83,7 @@ export function AdminConsole({
                 noticeTimer.current = null;
                 setNotice(null);
               }}
-              className="-mt-1 -mr-1 rounded-full p-1 text-current/70 transition-colors hover:bg-black/5 hover:text-current dark:hover:bg-white/10"
+              className="-mt-1 -mr-1 rounded-full p-1 text-current/70 transition-colors hover:bg-black/5 hover:text-current"
             >
               <span aria-hidden="true" className="text-lg leading-none">
                 ×
@@ -121,7 +121,7 @@ export function AdminConsole({
           <button
             type="button"
             onClick={logout}
-            className="col-span-2 w-full rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 sm:ml-auto sm:w-auto dark:border-red-900 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/70"
+            className="col-span-2 w-full rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 sm:ml-auto sm:w-auto"
           >
             Sign out
           </button>
@@ -148,7 +148,7 @@ export function AdminConsole({
 
       {tab === "dashboard" ? (
         <div className="flex flex-col gap-5">
-          <p className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          <p className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
             {initialDashboard.disclaimer}
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -273,12 +273,12 @@ export function AdminConsole({
                           : "never"}
                       </td>
                       <td
-                        className={`px-4 py-3 ${source.consecutiveFailures > 0 ? "font-medium text-red-700 dark:text-red-400" : ""}`}
+                        className={`px-4 py-3 ${source.consecutiveFailures > 0 ? "font-medium text-red-700" : ""}`}
                       >
                         {source.consecutiveFailures}
                       </td>
                       <td
-                        className={`px-4 py-3 ${source.zeroYieldStreak >= 3 ? "font-medium text-amber-700 dark:text-amber-400" : ""}`}
+                        className={`px-4 py-3 ${source.zeroYieldStreak >= 3 ? "font-medium text-amber-700" : ""}`}
                       >
                         {source.zeroYieldStreak}
                       </td>
@@ -309,7 +309,7 @@ export function AdminConsole({
           <div className="mt-5 flex flex-wrap gap-3">
             <a
               href="/api/admin/brief?days=30&format=csv"
-              className="rounded-xl bg-brand px-4 py-2.5 font-semibold text-white hover:bg-[#095343]"
+              className="rounded-xl bg-brand px-4 py-2.5 font-semibold text-white hover:bg-brand-strong"
             >
               Download CSV
             </a>
@@ -387,7 +387,7 @@ function QueueItemCard({
   }
 
   return (
-    <article className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-5 shadow-[0_18px_45px_-40px_rgba(17,37,31,0.6)] sm:p-6">
+    <article className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-5 shadow-[0_18px_45px_-40px_rgb(var(--panel-rgb)/0.24)] sm:p-6">
       <header className="flex flex-wrap items-center gap-2 text-xs text-muted">
         <span className="rounded-full bg-brand-soft px-2.5 py-1 font-semibold text-brand-strong">
           {item.status}
@@ -458,7 +458,7 @@ function QueueItemCard({
           type="button"
           disabled={busy}
           onClick={() => submit("correct")}
-          className="h-10 rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-[#095343] disabled:opacity-50"
+          className="h-10 rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-strong disabled:opacity-50"
         >
           Save correction
         </button>

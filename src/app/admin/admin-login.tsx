@@ -50,12 +50,12 @@ export function AdminLogin() {
       <button
         type="submit"
         disabled={sending || passcode.length === 0}
-        className="h-12 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-[#095343] disabled:opacity-50"
+        className="h-12 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong disabled:opacity-50"
       >
         {sending ? "Signing in…" : "Sign in"}
       </button>
       {error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}

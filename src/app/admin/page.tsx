@@ -36,7 +36,7 @@ export default async function AdminPage({
   if (!authed) {
     return (
       <main className="page-grid grid flex-1 place-items-center px-5 py-12">
-        <div className="w-full max-w-md overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_28px_80px_-36px_rgba(17,37,31,0.45)]">
+        <div className="w-full max-w-md overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_28px_80px_-36px_rgb(var(--panel-rgb)/0.2)]">
           <header className="border-b border-line p-6">
             <p className="font-mono text-xs tracking-[0.16em] text-brand-strong uppercase">
               Restricted access

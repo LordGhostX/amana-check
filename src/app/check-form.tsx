@@ -135,10 +135,10 @@ export function CheckForm() {
   }
 
   return (
-    <div className="min-w-0 lg:-mt-10">
+    <div className="min-w-0 lg:-mt-12">
       <form
         onSubmit={onSubmit}
-        className="overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_28px_80px_-36px_rgba(17,37,31,0.38)]"
+        className="overflow-hidden rounded-[1.75rem] border border-line bg-surface shadow-[0_28px_80px_-36px_rgb(var(--panel-rgb)/0.2)]"
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ export function CheckForm() {
             </div>
           </div>
           <span className="hidden items-center gap-2 text-xs font-medium text-muted sm:flex">
-            <span className="size-2 rounded-full bg-accent shadow-[0_0_0_3px_rgba(217,247,95,0.12)]" />
+            <span className="size-2 rounded-full bg-accent shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.18)]" />
             No account required
           </span>
         </div>
@@ -199,7 +199,7 @@ export function CheckForm() {
             <button
               type="submit"
               disabled={state === "loading" || text.trim().length < 3}
-              className="group flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-[0_8px_22px_-10px_rgba(15,113,91,0.9)] transition-all hover:-translate-y-0.5 hover:bg-[#095343] disabled:translate-y-0 disabled:opacity-45 sm:min-w-40"
+              className="group flex h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-[0_8px_22px_-10px_rgb(var(--brand-rgb)/0.35)] transition-all hover:-translate-y-0.5 hover:bg-brand-strong disabled:translate-y-0 disabled:opacity-45 sm:min-w-40"
             >
               {state === "loading" ? (
                 <>
@@ -245,7 +245,7 @@ export function CheckForm() {
             <div className="flex items-center gap-3">
               <span className="relative flex size-3">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-40" />
-                <span className="relative inline-flex size-3 rounded-full bg-accent shadow-[0_0_0_3px_rgba(217,247,95,0.12)]" />
+                <span className="relative inline-flex size-3 rounded-full bg-accent shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.18)]" />
               </span>
               <p className="font-semibold">Checking the message</p>
             </div>
@@ -260,7 +260,7 @@ export function CheckForm() {
         {error ? (
           <p
             role="alert"
-            className="rounded-2xl border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100"
+            className="rounded-2xl border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-900"
           >
             <span className="font-semibold">The check did not finish.</span>{" "}
             {error}

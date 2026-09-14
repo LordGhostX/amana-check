@@ -87,7 +87,7 @@ export default async function HelpPage() {
                   return (
                     <li
                       key={row.id}
-                      className="flex min-h-48 flex-col rounded-2xl border border-line bg-surface p-5 text-sm shadow-[0_18px_45px_-38px_rgba(17,37,31,0.6)]"
+                      className="flex min-h-48 flex-col rounded-2xl border border-line bg-surface p-5 text-sm shadow-[0_18px_45px_-38px_rgb(var(--panel-rgb)/0.24)]"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <span className="text-base font-semibold text-ink">
@@ -99,14 +99,14 @@ export default async function HelpPage() {
                       </div>
                       <div className="mt-2">
                         {row.verifiedAt ? (
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
                             <span aria-hidden="true">✓</span> Verified{" "}
                             {new Date(row.verifiedAt).toLocaleDateString(
                               "en-GB",
                             )}
                           </span>
                         ) : (
-                          <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                          <span className="text-xs font-medium text-amber-700">
                             Not yet independently verified; confirm locally
                           </span>
                         )}

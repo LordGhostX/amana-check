@@ -234,10 +234,8 @@ export default function MethodologyPage() {
             </ul>
           </section>
 
-          <section className="rounded-[1.75rem] border border-amber-300 bg-amber-50 p-5 sm:p-7 dark:border-amber-900 dark:bg-amber-950/40">
-            <p className="font-mono text-xs text-amber-800 dark:text-amber-300">
-              05 / LIMITS
-            </p>
+          <section className="rounded-[1.75rem] border border-amber-300 bg-amber-50 p-5 sm:p-7">
+            <p className="font-mono text-xs text-amber-800">05 / LIMITS</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-ink">
               Current limits
             </h2>
@@ -261,7 +259,7 @@ export default function MethodologyPage() {
         <div className="lg:col-span-2">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#095343]"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-strong"
           >
             Check a message <span aria-hidden="true">→</span>
           </Link>
