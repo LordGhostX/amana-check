@@ -22,11 +22,11 @@ The ingestion client uses an honest user agent and fixed arguments. If a publish
 
 ## Source tiers
 
-| Tier | Kind                     | Examples                                                                                  |
-| ---- | ------------------------ | ----------------------------------------------------------------------------------------- |
-| T1   | Official primary         | NCDC, NEMA, INEC, Kenya Ministry of Health, NPS, NDMA, IEBC, Kenya Met, Kenya News Agency |
-| T2   | Independent verification | Dubawa, FactCheckHub, PesaCheck, UN OCHA ReliefWeb, The New Humanitarian                  |
-| T3   | Credible media           | Established newsrooms, used as supporting evidence only                                   |
+| Tier | Kind                     | Examples                                                                                                                                                                                                          |
+| ---- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T1   | Official primary         | Nigeria: NCDC, NEMA, INEC, News Agency of Nigeria, State House Nigeria. Kenya: Kenya News Agency, Office of the President, KEMRI, NEMA, NDMA, KALRO, Ministry of Health, National Police Service, Kenya Met, IEBC |
+| T2   | Independent verification | Nigeria: Dubawa, FactCheckHub, PesaCheck, ReliefWeb, The New Humanitarian. Kenya: ReliefWeb, Kenya Red Cross, PesaCheck, The New Humanitarian                                                                     |
+| T3   | Credible media           | Nigeria: Premium Times, Guardian Nigeria, Daily Trust, The Punch, Nigeria Health Watch. Kenya: The Standard, KBC, Capital FM                                                                                      |
 
 T1 alone can support a verdict. A contested claim can also reach a verdict with two independent T2 publishers. T3 never decides alone.
 

@@ -11,17 +11,17 @@ const SOURCE_TIERS = [
   [
     "T1",
     "Official primary",
-    "NCDC, NEMA, INEC, Kenya Ministry of Health, National Police Service, NDMA, IEBC, Kenya Met, Kenya News Agency",
+    "Nigeria: NCDC, NEMA, INEC, News Agency of Nigeria, State House Nigeria. Kenya: Kenya News Agency, Office of the President, KEMRI, NEMA, NDMA, KALRO, Ministry of Health, National Police Service, Kenya Met, IEBC",
   ],
   [
     "T2",
     "Independent verification",
-    "Fact-checkers such as Dubawa, FactCheckHub, and PesaCheck, plus humanitarian sources such as UN OCHA ReliefWeb and The New Humanitarian",
+    "Nigeria: Dubawa, FactCheckHub, PesaCheck, ReliefWeb, The New Humanitarian. Kenya: ReliefWeb, Kenya Red Cross, PesaCheck, The New Humanitarian",
   ],
   [
     "T3",
     "Credible media",
-    "Established national and regional newsrooms used as supporting evidence, never as the sole basis for a verdict",
+    "Nigeria: Premium Times, Guardian Nigeria, Daily Trust, The Punch, Nigeria Health Watch. Kenya: The Standard, KBC, Capital FM. These sources support a verdict but never decide one alone",
   ],
 ];
 

@@ -13,6 +13,32 @@ sources:
     refresh_interval: null
     enabled: true
 
+  - id: president-ke
+    publisher: Office of the President of Kenya
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: api
+      url: "https://www.president.go.ke/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
+    license: public
+    refresh_interval: null
+    enabled: true
+
+  - id: kemri-ke
+    publisher: Kenya Medical Research Institute
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: api
+      url: "https://www.kemri.go.ke/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
+    license: public
+    refresh_interval: null
+    enabled: true
+
   - id: nema-ke
     publisher: National Environment Management Authority Kenya
     type: official
@@ -64,9 +90,6 @@ sources:
     refresh_interval: null
     enabled: true
 
-  # ReliefWeb answers Bun/Node with 202 or 406 on country feeds; the ingestion
-  # adapter retries through curl with our honest user agent. The sanctioned fix
-  # is an approved ReliefWeb API appname (see docs/future-directions.md).
   - id: reliefweb-ken
     publisher: ReliefWeb (UN OCHA)
     type: humanitarian
@@ -76,6 +99,19 @@ sources:
       kind: rss
       url: "https://reliefweb.int/country/ken/rss.xml"
     license: open
+    refresh_interval: null
+    enabled: true
+
+  - id: redcross-ke
+    publisher: Kenya Red Cross
+    type: humanitarian
+    tier: 2
+    scope: [national]
+    fetch:
+      kind: api
+      url: "https://redcross.or.ke/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
+    license: copyrighted
     refresh_interval: null
     enabled: true
 
@@ -113,6 +149,19 @@ sources:
     fetch:
       kind: api
       url: "https://www.ndma.go.ke/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
+    license: public
+    refresh_interval: null
+    enabled: true
+
+  - id: kalro-ke
+    publisher: Kenya Agricultural and Livestock Research Organization
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: api
+      url: "https://www.kalro.org/wp-json/wp/v2/posts?per_page=100"
       max_items: 100
     license: public
     refresh_interval: null

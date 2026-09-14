@@ -28,6 +28,32 @@ sources:
     refresh_interval: null
     enabled: true
 
+  - id: nan-ng
+    publisher: News Agency of Nigeria
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: api
+      url: "https://nannews.ng/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
+    license: public
+    refresh_interval: null
+    enabled: true
+
+  - id: statehouse-ng
+    publisher: State House Nigeria
+    type: official
+    tier: 1
+    scope: [national]
+    fetch:
+      kind: api
+      url: "https://statehouse.gov.ng/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
+    license: public
+    refresh_interval: null
+    enabled: true
+
   - id: premium-times
     publisher: Premium Times
     type: media
@@ -36,6 +62,19 @@ sources:
     fetch:
       kind: api
       url: "https://www.premiumtimesng.com/wp-json/wp/v2/posts?per_page=100"
+      max_items: 100
+    license: copyrighted
+    refresh_interval: null
+    enabled: true
+
+  - id: guardian-ng
+    publisher: Guardian Nigeria
+    type: media
+    tier: 3
+    scope: [national]
+    fetch:
+      kind: api
+      url: "https://guardian.ng/wp-json/wp/v2/posts?per_page=100"
       max_items: 100
     license: copyrighted
     refresh_interval: null
@@ -106,9 +145,6 @@ sources:
     refresh_interval: null
     enabled: true
 
-  # ReliefWeb answers Bun/Node with 202 or 406 on country feeds; the ingestion
-  # adapter retries through curl with our honest user agent. The sanctioned fix
-  # is an approved ReliefWeb API appname (see docs/future-directions.md).
   - id: reliefweb-nga
     publisher: ReliefWeb (UN OCHA)
     type: humanitarian

@@ -12,7 +12,7 @@ The proof of concept works end to end. The corpus, trust engine, citizen experie
 
 - Eval, 2026-09-11: 14 of 14 claims pass, claim type 13 of 13, language detection 7 of 7, evidence coverage 1 of 1 applicable expectation, citation coverage 4 of 4 applicable answers, no errors, $0.032018 for the full run.
 - Red-team: 11 checks pass, including live prompt injection, forged citations, and oversized input.
-- Corpus: 26 enabled sources, 13 for Nigeria and 13 for Kenya, holding 273 documents.
+- Corpus: 33 enabled sources, 16 for Nigeria and 17 for Kenya, holding 1,891 documents.
 
 The model never receives the corpus. Retrieval shortlists the highest-ranked chunk from up to 24 distinct documents and sends at most 8 excerpts, each capped at 700 characters; [docs/methodology.md](docs/methodology.md) explains the pipeline and its context budget.
 
@@ -31,6 +31,51 @@ Results show the verdict, freshness explanation, cited evidence, and what remain
 The help page lists verified contact pathways for Nigeria and Kenya.
 
 ![Trusted contacts help page](docs/images/help-page.png)
+
+## Sources
+
+The registry currently has 33 enabled source feeds, with 16 in Nigeria and 17 in Kenya. The feeds are grouped by country below; NCDC contributes two separate feeds.
+
+### Nigeria
+
+- NCDC recent news
+- NCDC disease situation reports
+- News Agency of Nigeria
+- State House Nigeria
+- Premium Times
+- Guardian Nigeria
+- Daily Trust
+- The Punch
+- Dubawa
+- FactCheckHub
+- PesaCheck
+- ReliefWeb (UN OCHA)
+- The New Humanitarian
+- Nigeria Health Watch
+- National Emergency Management Agency
+- Independent National Electoral Commission
+
+### Kenya
+
+- Kenya News Agency
+- Office of the President of Kenya
+- Kenya Medical Research Institute
+- National Environment Management Authority Kenya
+- The Standard
+- Kenya Broadcasting Corporation
+- Capital FM Kenya
+- ReliefWeb (UN OCHA)
+- Kenya Red Cross
+- The New Humanitarian
+- PesaCheck
+- National Drought Management Authority
+- Kenya Agricultural and Livestock Research Organization
+- Ministry of Health Kenya
+- National Police Service Kenya
+- Kenya Meteorological Department
+- Independent Electoral and Boundaries Commission
+
+Source definitions live in [data/sources/nigeria.yml](data/sources/nigeria.yml) and [data/sources/kenya.yml](data/sources/kenya.yml). Edit those registries, run `bun run db:seed` to sync the database, then run `bun run ingest` to refresh every enabled feed. Use `bun run ingest --source <id>` when testing one source.
 
 ## License
 
