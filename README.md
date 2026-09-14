@@ -77,10 +77,6 @@ The registry currently has 33 enabled source feeds, with 16 in Nigeria and 17 in
 
 Source definitions live in [data/sources/nigeria.yml](data/sources/nigeria.yml) and [data/sources/kenya.yml](data/sources/kenya.yml). Edit those registries, run `bun run db:seed` to sync the database, then run `bun run ingest` to refresh every enabled feed. Use `bun run ingest --source <id>` when testing one source.
 
-## License
-
-Amana Check is released under the [MIT License](LICENSE).
-
 ## Stack
 
 - Next.js App Router, TypeScript strict, Tailwind CSS
@@ -179,3 +175,7 @@ docs/                     Plan, methodology, threat model, constraints, future w
 - Aggregated `events` are k≥3 and represent verification demand, not confirmed incidents.
 
 See [docs/PLAN.md](docs/PLAN.md) for the retention tradeoff.
+
+## License
+
+Amana Check is released under the [MIT License](LICENSE).
