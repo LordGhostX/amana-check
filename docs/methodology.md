@@ -81,7 +81,7 @@ Evidence selection and the status decision stay deterministic. The model only ph
 - One model call detects the language, translates the claim into an English search query, extracts keywords and location hints, and classifies the claim type and sensitivity.
 - The reply is written in the detected language. English, Nigerian Pidgin, and Swahili are the strongest. Yoruba, Igbo, and Hausa are machine-generated and carry a machine-translation label in the interface.
 - Location precedence is: a place named in the claim, then the user's selection, then a first-party cookie, then Vercel geo headers, then the national default. Geo only narrows the corpus. It never decides language.
-- No language preference is stored. The `amana_lang` cookie and the `locale_hints` table were removed before deployment because each message is detected on its own and the interface is English with browser translation.
+- No language preference is stored. Each message is detected on its own and the interface is English with browser translation.
 
 ## Caching and versioning
 

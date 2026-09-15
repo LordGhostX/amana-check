@@ -2,6 +2,8 @@
 
 **Check before you share.**
 
+Live site: [amana-check.vercel.app](https://amana-check.vercel.app)
+
 Amana Check is a community-facing trust layer for fragile information environments. A rumor or question arrives in any language. Amana answers in the same language with what is actually known, gives a source and a date for each fact, and says when it cannot tell. Local peacebuilders see an anonymous, aggregated signal of verification demand.
 
 Built for the OSF × Andela hackathon "Information you can trust". Primary track: Stability & Social Cohesion. Complementary tracks: Transparency & Accountability, and Safety through referral pathways only.
@@ -108,9 +110,9 @@ The Vercel Node runtime may not include the optional `curl` binary. A source tha
 
 ## Deploy
 
-`vercel.json` sets the build command to `bun run db:setup && bun run build`, then registers twelve production cron entries two hours apart. Each entry calls the authenticated `/api/cron/ingest` route; the route shuffles sources, processes four at a time, and returns its duration and counts. Set `DATABASE_URL` to the pooled Neon connection, `DATABASE_URL_UNPOOLED` to the direct one for migrations and ingestion locking, and `CRON_SECRET` to a random value in Vercel Production. Run `bun run ingest` locally whenever you want to refresh the corpus by hand.
+`vercel.json` sets the build command to `bun run db:setup && bun run build`, then registers eight production cron entries three hours apart. Each entry calls the authenticated `/api/cron/ingest` route; the route shuffles sources, processes four at a time, and returns its duration and counts. Set `DATABASE_URL` to the pooled Neon connection, `DATABASE_URL_UNPOOLED` to the direct one for migrations and ingestion locking, and `CRON_SECRET` to a random value in Vercel Production. Run `bun run ingest` locally whenever you want to refresh the corpus by hand.
 
-Hobby cron entries can run once per day and may arrive anywhere inside the scheduled hour, so the twelve-entry schedule approximates a two-hour refresh. Pro projects can replace them with one `0 */2 * * *` entry for per-minute scheduling precision. Cron jobs run only on production deployments. To test the route locally, start the app and send `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/ingest`.
+Hobby cron entries can run once per day and may arrive anywhere inside the scheduled hour, so the eight-entry schedule approximates a three-hour refresh. Pro projects can replace them with one `0 */3 * * *` entry for per-minute scheduling precision. Cron jobs run only on production deployments. To test the route locally, start the app and send `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/ingest`.
 
 ## Scripts
 
