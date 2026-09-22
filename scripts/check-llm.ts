@@ -8,10 +8,10 @@ const schema = z.object({
 });
 
 async function main() {
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY && !process.env.AI_GATEWAY_API_KEY) {
     console.log(
-      "OPENROUTER_API_KEY is not set — skipping the live call. " +
-        "The client is hardcoded to zdr=true + data_collection=deny and fails closed.",
+      "Neither OPENROUTER_API_KEY nor AI_GATEWAY_API_KEY is set — skipping the live call. " +
+        "The client uses a privacy-constrained provider path and fails closed.",
     );
     return;
   }

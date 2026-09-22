@@ -1,14 +1,11 @@
 import { z } from "zod";
-import { parseModelChain, requireEnv } from "@/lib/env";
+import { optionalEnv, parseModelChain } from "@/lib/env";
 import { SITE_URL } from "@/lib/site";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const AI_GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
 
-/**
- * Hardcoded privacy invariants. These are deliberately not configurable:
- * if no endpoint can satisfy them, the call fails closed and the caller
- * must fall back to the deterministic extractive answer path.
- */
+/** OpenRouter privacy controls remain hardcoded on every OpenRouter request. */
 const PRIVACY_INVARIANTS = {
   zdr: true,
   data_collection: "deny",
@@ -18,7 +15,7 @@ const PRIVACY_INVARIANTS = {
 export class NoCompliantProviderError extends Error {
   readonly code = "NO_COMPLIANT_PROVIDER";
   constructor(detail: string) {
-    super(`No ZDR-compliant OpenRouter endpoint available: ${detail}`);
+    super(`No compliant LLM provider endpoint available: ${detail}`);
     this.name = "NoCompliantProviderError";
   }
 }
@@ -34,8 +31,8 @@ export class ModelOutputError extends Error {
 export class LlmRequestError extends Error {
   readonly code = "LLM_REQUEST_FAILED";
   readonly status: number;
-  constructor(status: number, detail: string) {
-    super(`OpenRouter request failed (${status}): ${detail}`);
+  constructor(status: number, detail: string, provider = "LLM provider") {
+    super(`${provider} request failed (${status}): ${detail}`);
     this.name = "LlmRequestError";
     this.status = status;
   }
@@ -73,7 +70,7 @@ export interface StructuredCallResult<T> {
   usage: { inputTokens: number; outputTokens: number; costUsd?: number };
 }
 
-interface OpenRouterResponse {
+interface LlmResponse {
   model?: string;
   choices?: {
     message?: {
@@ -85,9 +82,109 @@ interface OpenRouterResponse {
 
 function isNoCompliantProvider(status: number, body: string): boolean {
   if (status !== 404 && status !== 400 && status !== 403) return false;
-  return /no endpoints|data policy|zero data retention|zdr|data_collection/i.test(
+  return /no endpoints|data policy|zero data retention|zero-data-retention|zdr|data_collection|prompt training/i.test(
     body,
   );
+}
+
+function isGatewayZdrPlanError(status: number, body: string): boolean {
+  if (status !== 400 && status !== 403) return false;
+  return (
+    /zero data retention|zero-data-retention|\bzdr\b/i.test(body) &&
+    /only available|current plan|upgrade|permission_denied/i.test(body)
+  );
+}
+
+type LlmProvider = "openrouter" | "gateway";
+
+interface ProviderConfig {
+  kind: LlmProvider;
+  name: string;
+  url: string;
+  apiKey: string;
+}
+
+function resolveProvider(): ProviderConfig {
+  const openRouterKey = optionalEnv("OPENROUTER_API_KEY");
+  if (openRouterKey) {
+    return {
+      kind: "openrouter",
+      name: "OpenRouter",
+      url: OPENROUTER_URL,
+      apiKey: openRouterKey,
+    };
+  }
+
+  const gatewayKey = optionalEnv("AI_GATEWAY_API_KEY");
+  if (gatewayKey) {
+    return {
+      kind: "gateway",
+      name: "Vercel AI Gateway",
+      url: AI_GATEWAY_URL,
+      apiKey: gatewayKey,
+    };
+  }
+
+  throw new Error(
+    "Missing required environment variable: OPENROUTER_API_KEY or AI_GATEWAY_API_KEY",
+  );
+}
+
+function gatewayJsonSchema<T>(schema: z.ZodType<T>): Record<string, unknown> {
+  const generated = z.toJSONSchema(schema, { target: "draft-07" }) as Record<
+    string,
+    unknown
+  >;
+  const jsonSchema = { ...generated };
+  delete jsonSchema.$schema;
+  delete jsonSchema["~standard"];
+  return jsonSchema;
+}
+
+function requestBody<T>(
+  provider: ProviderConfig,
+  schema: z.ZodType<T>,
+  messages: ChatMessage[],
+  options: StructuredCallOptions,
+  models: string[],
+  omitGatewayZdr: boolean,
+): Record<string, unknown> {
+  const common = {
+    messages,
+    stream: false,
+    temperature: options.temperature ?? 0.1,
+    max_tokens: options.maxTokens ?? 4000,
+  };
+
+  if (provider.kind === "openrouter") {
+    return {
+      ...common,
+      models,
+      response_format: { type: "json_object" },
+      provider: { ...PRIVACY_INVARIANTS },
+    };
+  }
+
+  const gatewayOptions: Record<string, unknown> = {
+    disallowPromptTraining: true,
+  };
+  if (!omitGatewayZdr) gatewayOptions.zeroDataRetention = true;
+  if (models.length > 1) gatewayOptions.models = models.slice(1);
+
+  return {
+    ...common,
+    model: models[0],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: `${options.stage}_response`,
+        schema: gatewayJsonSchema(schema),
+      },
+    },
+    providerOptions: {
+      gateway: gatewayOptions,
+    },
+  };
 }
 
 function extractJson(raw: string): unknown {
@@ -121,9 +218,10 @@ export async function callStructured<T>(
   messages: ChatMessage[],
   options: StructuredCallOptions,
 ): Promise<StructuredCallResult<T>> {
-  const apiKey = requireEnv("OPENROUTER_API_KEY");
+  const provider = resolveProvider();
   const models = parseModelChain();
   const attempts = 2;
+  let omitGatewayZdr = false;
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -136,27 +234,33 @@ export async function callStructured<T>(
 
     let response: Response;
     try {
-      response = await fetch(OPENROUTER_URL, {
+      response = await fetch(provider.url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${provider.apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": SITE_URL,
-          "X-OpenRouter-Title": "Amana Check",
+          ...(provider.kind === "openrouter"
+            ? {
+                "HTTP-Referer": SITE_URL,
+                "X-OpenRouter-Title": "Amana Check",
+              }
+            : {}),
         },
         signal: controller.signal,
-        body: JSON.stringify({
-          models,
-          messages,
-          temperature: options.temperature ?? 0.1,
-          max_tokens: options.maxTokens ?? 4000,
-          response_format: { type: "json_object" },
-          provider: { ...PRIVACY_INVARIANTS },
-        }),
+        body: JSON.stringify(
+          requestBody(
+            provider,
+            schema,
+            messages,
+            options,
+            models,
+            omitGatewayZdr,
+          ),
+        ),
       });
     } catch (error) {
       clearTimeout(timeout);
-      lastError = new LlmRequestError(0, String(error));
+      lastError = new LlmRequestError(0, String(error), provider.name);
       if (attempt < attempts) {
         await sleep(400 * attempt);
         continue;
@@ -177,8 +281,19 @@ export async function callStructured<T>(
 
     if (!response.ok) {
       const body = await response.text().catch(() => "");
+      if (
+        provider.kind === "gateway" &&
+        !omitGatewayZdr &&
+        isGatewayZdrPlanError(response.status, body) &&
+        attempt < attempts
+      ) {
+        omitGatewayZdr = true;
+        continue;
+      }
       if (isNoCompliantProvider(response.status, body)) {
-        const error = new NoCompliantProviderError(body.slice(0, 300));
+        const error = new NoCompliantProviderError(
+          `${provider.name}: ${body.slice(0, 300)}`,
+        );
         await options.onCall?.({
           stage: options.stage,
           model: models[0] ?? "unknown",
@@ -191,7 +306,11 @@ export async function callStructured<T>(
         });
         throw error;
       }
-      lastError = new LlmRequestError(response.status, body.slice(0, 500));
+      lastError = new LlmRequestError(
+        response.status,
+        body.slice(0, 500),
+        provider.name,
+      );
       if (
         (response.status === 429 || response.status >= 500) &&
         attempt < attempts
@@ -212,7 +331,7 @@ export async function callStructured<T>(
       throw lastError;
     }
 
-    const payload = (await response.json()) as OpenRouterResponse;
+    const payload = (await response.json()) as LlmResponse;
     const model = payload.model ?? models[0] ?? "unknown";
     const inputTokens = payload.usage?.prompt_tokens ?? 0;
     const outputTokens = payload.usage?.completion_tokens ?? 0;

@@ -12,9 +12,9 @@ Built for the OSF × Andela hackathon "Information you can trust". Primary track
 
 The proof of concept works end to end. The corpus, trust engine, citizen experience, accountability loop, and hardening phases are complete. Submission artifacts remain.
 
-- Eval, 2026-09-11: 14 of 14 claims pass, claim type 13 of 13, language detection 7 of 7, evidence coverage 1 of 1 applicable expectation, citation coverage 4 of 4 applicable answers, no errors, $0.032018 for the full run.
+- Eval, 2026-09-21: 14 of 14 claims pass, claim type 13 of 13, language detection 7 of 7, evidence coverage 1 of 1 applicable expectation, citation coverage 4 of 4 applicable answers, no errors, $0.032018 for the full run.
 - Red-team: 11 checks pass, including live prompt injection, forged citations, and oversized input.
-- Corpus: 33 enabled sources, 16 for Nigeria and 17 for Kenya, holding 1,891 documents.
+- Corpus: 33 enabled sources, 16 for Nigeria and 17 for Kenya, holding more than 6,000 documents as of this writing.
 
 The model never receives the corpus. Retrieval shortlists the highest-ranked chunk from up to 24 distinct documents and sends at most 8 excerpts, each capped at 700 characters; [docs/methodology.md](docs/methodology.md) explains the pipeline and its context budget.
 
@@ -83,7 +83,7 @@ Source definitions live in [data/sources/nigeria.yml](data/sources/nigeria.yml) 
 
 - Next.js App Router, TypeScript strict, Tailwind CSS
 - Postgres and Drizzle ORM with the postgres.js driver. Local Postgres in development, Neon in production.
-- OpenRouter with DeepSeek 4.1 Flash and a DeepSeek 4 Flash fallback. Requests are hardcoded to zero-retention, no-training endpoints.
+- OpenRouter with DeepSeek 4.1 Flash and a DeepSeek 4 Flash fallback, or Vercel AI Gateway when the OpenRouter key is blank. Requests ask for zero-retention and no-training controls; Gateway retries without zero-retention when the current plan rejects that option.
 - Zod validation at every model boundary, with deterministic fallbacks.
 
 ## Setup
@@ -94,7 +94,7 @@ Requires [Bun](https://bun.sh) and a local Postgres.
 bun install
 createdb amana_check
 cp .env.example .env
-# then set OPENROUTER_API_KEY, APP_SECRET, ADMIN_PASSCODE, and CRON_SECRET
+# then set OPENROUTER_API_KEY or AI_GATEWAY_API_KEY, plus APP_SECRET, ADMIN_PASSCODE, and CRON_SECRET
 bun run db:setup
 bun run ingest
 bun run dev
@@ -135,7 +135,7 @@ Hobby cron entries can run once per day and may arrive anywhere inside the sched
 | `bun run ingest`         | Fetch enabled sources into the corpus (flags: `--source`, `--country`, `--limit`, `--concurrency`) |
 | `bun run ask`            | Run the full pipeline on a claim (flags: `--ng`, `--ke`, `--fresh`)                                |
 | `bun run eval`           | Run the eval harness and write `eval/results/latest.json`                                          |
-| `bun run check:llm`      | Verify the fail-closed OpenRouter path                                                             |
+| `bun run check:llm`      | Verify the fail-closed LLM provider path                                                           |
 | `bun run check:pipeline` | Run extraction, retrieval, and the freshness gate on a sample claim                                |
 | `bun run red-team`       | Run static privacy checks and live adversarial claims                                              |
 
@@ -154,7 +154,7 @@ src/app/                  UI, answer card, admin console, API routes
 src/lib/admin/            Signed sessions, review queue, dashboard, brief export
 src/lib/db/               Drizzle schema + client
 src/lib/ingest/           RSS and HTML adapters, cleaning, chunking, upserts
-src/lib/llm/              Fail-closed OpenRouter client, prompts, budget
+src/lib/llm/              Fail-closed provider client, prompts, budget
 src/lib/locale/           HMAC IP hashing, geo headers, location precedence
 src/lib/pipeline/         Extraction, synthesis, orchestration, events
 src/lib/referrals/        Action and hotline library

@@ -8,20 +8,20 @@ Amana Check is a community-facing trust layer for fragile information environmen
 
 ## Decision ledger
 
-| Area                | Decision                                                                                                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Regions             | Nigeria (36 states + FCT) and Kenya (47 counties). Geo suggests the corpus pack, and never decides language.                                                     |
-| Location precedence | Explicit location in the claim, then user selection, then cookie, then Vercel region, then national.                                                             |
-| UI                  | English only, browser-translatable. Answer content in the detected language.                                                                                     |
-| Language            | Any input is detected, translated into an English query for search, and answered in the original language. Fallback is English.                                  |
-| Model               | OpenRouter with an ordered fallback chain: `deepseek/deepseek-v4.1-flash`, then `deepseek/deepseek-v4-flash-0731`.                                               |
-| Privacy invariants  | Hardcoded `zdr: true`, `data_collection: "deny"`, `require_parameters: true`. Fail closed.                                                                       |
-| Retrieval           | Postgres FTS and `pg_trgm` with deterministic scoring. No aliases, no fact cards, no LLM reranker.                                                               |
-| Pipeline            | Two model calls, Zod validation on both, one retry, deterministic fallback.                                                                                      |
-| Sourcing            | Ingestion pipeline only. The runtime never touches the web.                                                                                                      |
-| IP handling         | `HMAC-SHA256(APP_SECRET, ip)` for rate limiting only. The `locale_hints` table was removed before deployment because language preference storage was not needed. |
-| Retention           | All inputs are kept indefinitely, de-identified and unlinked.                                                                                                    |
-| Delivery            | Responsive website. Offline, PWA, SMS, and USSD are documented as future directions.                                                                             |
+| Area                | Decision                                                                                                                                                                                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Regions             | Nigeria (36 states + FCT) and Kenya (47 counties). Geo suggests the corpus pack, and never decides language.                                                                                                                                       |
+| Location precedence | Explicit location in the claim, then user selection, then cookie, then Vercel region, then national.                                                                                                                                               |
+| UI                  | English only, browser-translatable. Answer content in the detected language.                                                                                                                                                                       |
+| Language            | Any input is detected, translated into an English query for search, and answered in the original language. Fallback is English.                                                                                                                    |
+| Model               | OpenRouter first, with Vercel AI Gateway as the key-based fallback. Both use an ordered chain: `deepseek/deepseek-v4.1-flash`, then `deepseek/deepseek-v4-flash-0731`.                                                                             |
+| Privacy invariants  | OpenRouter sends hardcoded `zdr: true`, `data_collection: "deny"`, and `require_parameters: true`; AI Gateway requests set `zeroDataRetention` and `disallowPromptTraining`, then retry without `zeroDataRetention` only when the plan rejects it. |
+| Retrieval           | Postgres FTS and `pg_trgm` with deterministic scoring. No aliases, no fact cards, no LLM reranker.                                                                                                                                                 |
+| Pipeline            | Two model calls, Zod validation on both, one retry, deterministic fallback.                                                                                                                                                                        |
+| Sourcing            | Ingestion pipeline only. The runtime never touches the web.                                                                                                                                                                                        |
+| IP handling         | `HMAC-SHA256(APP_SECRET, ip)` for rate limiting only. The `locale_hints` table was removed before deployment because language preference storage was not needed.                                                                                   |
+| Retention           | All inputs are kept indefinitely, de-identified and unlinked.                                                                                                                                                                                      |
+| Delivery            | Responsive website. Offline, PWA, SMS, and USSD are documented as future directions.                                                                                                                                                               |
 
 ## Retention tradeoff
 
@@ -49,7 +49,9 @@ Every OpenRouter call sends:
 }
 ```
 
-Zod runs on every response: `JSON.parse`, then Zod, then semantic checks, then accept. On failure the call retries once, then falls back to a deterministic extractive answer built from the top evidence, or to a safe message that the check could not be processed. If no ZDR-compliant endpoint exists, the call throws `NoCompliantProviderError` and the request fails closed. It is never routed through a provider that retains prompts. Prompt and completion content are never logged.
+Zod runs on every response: `JSON.parse`, then Zod, then semantic checks, then accept. On failure the call retries once, then falls back to a deterministic extractive answer built from the top evidence, or to a safe message that the check could not be processed. If no compliant endpoint exists, the call throws `NoCompliantProviderError` and the request fails closed. It is never routed through a provider that retains prompts. Prompt and completion content are never logged.
+
+If `OPENROUTER_API_KEY` is blank, the same client sends the request to Vercel AI Gateway with its `providerOptions.gateway.models` fallback list, `zeroDataRetention: true`, and `disallowPromptTraining: true`. When Gateway explicitly rejects zero-retention because of the current plan, it retries once without `zeroDataRetention` while retaining `disallowPromptTraining`. If neither provider key is set, the request fails before any network call.
 
 ## Freshness gate
 

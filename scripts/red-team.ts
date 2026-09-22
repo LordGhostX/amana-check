@@ -210,9 +210,9 @@ async function main() {
   testQuerySanitization();
   testCitationValidation();
 
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY && !process.env.AI_GATEWAY_API_KEY) {
     console.log(
-      "\nOPENROUTER_API_KEY not set — skipping live adversarial claims.",
+      "\nNeither OPENROUTER_API_KEY nor AI_GATEWAY_API_KEY is set — skipping live adversarial claims.",
     );
   } else {
     console.log("\nLive adversarial claims (each makes model calls):");
