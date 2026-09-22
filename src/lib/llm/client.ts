@@ -167,6 +167,7 @@ function requestBody<T>(
 
   const gatewayOptions: Record<string, unknown> = {
     disallowPromptTraining: true,
+    sort: "tps",
   };
   if (!omitGatewayZdr) gatewayOptions.zeroDataRetention = true;
   if (models.length > 1) gatewayOptions.models = models.slice(1);

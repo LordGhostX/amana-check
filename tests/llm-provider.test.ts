@@ -115,6 +115,7 @@ test("uses AI Gateway when the OpenRouter key is blank", async () => {
         models: ["model/fallback"],
         zeroDataRetention: true,
         disallowPromptTraining: true,
+        sort: "tps",
       },
     });
   } finally {
